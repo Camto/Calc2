@@ -18,7 +18,7 @@ grammar Calc2 {
 		|| <func_expr>
 		|| <match>
 	}
-	token number { \d+ }
+	token number { \d+ ['.' \d+] }
 	token obj_destr { <obj> '?' }
 	token obj_make { '`'* <obj> }
 	token obj { '()' || <:Lu> \w+ }
