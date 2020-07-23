@@ -37,7 +37,7 @@ rev = {[] {swap +} fold} ;
 reverse := {>>?-> 'reverse dip <<} ;
 
 >>? := {dup head? swap tail? and} ;
-head? := {()=? -> No_Match | -> head `Match} ;
+head? := {()? h @drop -> h `Match | -> No_Match} ;
 tail? := {()=? -> No_Match | -> tail `Match} ;
 
 foldr := {k z-> go := {>>?-> 'go dip k | _-> z} ; go} ;
