@@ -43,7 +43,7 @@ grammar Calc2 {
 	rule var_pipe_decl { <patt> '|=' <func> ';' }
 	
 	rule patt { [<expr_unit> || <patt_ident>]* }
-	token patt_ident { '@' <ident> }
+	rule patt_ident { '@' <ident> }
 }
 
 say Calc2.parse: get() while True;
