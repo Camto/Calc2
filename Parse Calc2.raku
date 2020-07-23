@@ -12,6 +12,7 @@ grammar Calc2 {
 		|| <obj_make>
 		|| <ident>
 		|| <op>
+		|| <string>
 		|| <quote>
 		|| '[' <expr> ']'
 		|| <infix_tuple>
@@ -33,6 +34,7 @@ grammar Calc2 {
 		| '=?' | '<?' | '>?' | '<=?' | '>=?'
 		| '<<?' | '>>?'
 	}
+	token string { '"' ['\\' . || <-["]>]* '"' }
 	rule quote { "'" <expr_unit> }
 	rule infix_tuple { '(' <expr>? [',' <expr>]* ')' }
 	rule func_expr { '{' <func> '}' }
