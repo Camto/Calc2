@@ -5,7 +5,7 @@
 ### Using predicates and question marks.
 
 ```
-fib := {0= -> 0 | 1= -> 1 | -> dup 1 - fib swap 2 - fib +} ;
+fib := {0=? -> 0 | 1=? -> 1 | -> dup 1 - fib swap 2 - fib +} ;
 fib := {2<? -> | -> dup 1 - fib swap 2 - fib +} ;
 
 Calc2 version
@@ -37,8 +37,8 @@ rev = {[] {swap +} fold} ;
 reverse := {>>?-> 'reverse dip <<} ;
 
 >>? := {dup head? swap tail? and} ;
-head? := {()=-> No_Match | -> head `Match} ;
-tail? := {()=-> No_Match | -> tail `Match} ;
+head? := {()=? -> No_Match | -> head `Match} ;
+tail? := {()=? -> No_Match | -> tail `Match} ;
 
 foldr := {k z-> go := {>>?-> 'go dip k | _-> z} ; go} ;
 
@@ -77,8 +77,8 @@ Variables can only be after a `->`, `{`, or `,` (specifically in parameters) bec
 
 ```
 df := {(0,()) {run_char 'wrap map_fst} fold} ;
-run_char := {()? -> unrot: "i"=->i | "d"=->d | "s"=->s | "o"=->o | _->(,)} ;
-wrap := {256=->0 | 1~=->0} ;
+run_char := {()? -> unrot: "i"=? ->i | "d"=? ->d | "s"=? ->s | "o"=? ->o | _->(,)} ;
+wrap := {256=? ->0 | 1~ =? ->0} ;
 i := {(1+,)} ; d := {(1-,)} ; s := {(2^,)} ; o := {dup (,<<)} ;
 "iiodddoisoisoiso" df
 ```
