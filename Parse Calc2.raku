@@ -1,11 +1,11 @@
 grammar Calc2 {
-	rule TOP { <case> }
+	rule TOP { <var_decls>? <expr> }
 	
 	rule func { <case>? ['|' <case>]* }
-	rule case { <patts>? <expr> }
+	rule case { <patts>? <var_decls>? <expr> }
 	rule patts { <patt>? [',' <patt>]* '->' }
 	
-	rule expr { <var_decls>? <expr_unit>* }
+	rule expr { <expr_unit>* }
 	rule expr_unit {
 		|| <number>
 		|| <obj_destr>
@@ -14,7 +14,7 @@ grammar Calc2 {
 		|| <op>
 		|| <string>
 		|| <quote>
-		|| '[' <expr> ']'
+		|| '[' <func> ']'
 		|| <infix_tuple>
 		|| <func_expr>
 		|| <match>
