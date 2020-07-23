@@ -22,7 +22,7 @@ grammar Calc2 {
 	token number { \d+ ['.' \d+]? }
 	token obj_destr { <obj> '?' }
 	token obj_make { '`'* <obj> }
-	token obj { '()' || <:Lu> \w+ }
+	token obj { '()' || <:Lu> \w* }
 	token ident { [<:Ll> || '_'] \w* '?'? }
 	token op {
 		| '+' | '~' | ['-' <![>]>] | '*' | '/'
