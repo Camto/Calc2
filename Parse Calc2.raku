@@ -41,8 +41,8 @@ grammar Calc2 {
 	rule match { ':' <![=]> <func> }
 	
 	rule var_decls { [<var_decl> || <var_pipe_decl>]+ }
-	rule var_decl { <patt> ':=' <func> ';' }
-	rule var_pipe_decl { <patt> '|=' <func> ';' }
+	rule var_decl { <patt> ':=' <expr> ';' }
+	rule var_pipe_decl { <patt> '|=' <expr> ';' }
 	
 	rule patt { [<expr_unit> || <patt_ident>]* }
 	rule patt_ident { '@' <ident> }
