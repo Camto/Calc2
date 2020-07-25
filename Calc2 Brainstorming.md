@@ -37,9 +37,9 @@ rev = {[] {swap +} fold} ;
 reverse := {>>?-> 'reverse dip <<} ;
 
 # New matching method.
->>? := {dup &'head swap &'tail and} ;
-
 >>? := {dup head swap tail} ;
+
+# Old matching method.
 >>? := {dup head? swap tail? and} ;
 head? := {()? h @drop -> h `Match | -> No_Match} ;
 tail? := {()=? -> No_Match | -> tail `Match} ;
