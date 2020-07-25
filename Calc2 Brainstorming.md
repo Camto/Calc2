@@ -8,6 +8,8 @@
 fib := {0=? -> 0 | 1=? -> 1 | -> dup 1 - fib swap 2 - fib +} ;
 fib := {2<? -> | -> dup 1 - fib swap 2 - fib +} ;
 
+map := {f obj-> 'obj [0 'obj tag make_obj $] {'f dip append} fold} ;
+
 Calc2 version
 maybe_map := {@swap Some? -> swap do `Some | _->} ;
 With dip
