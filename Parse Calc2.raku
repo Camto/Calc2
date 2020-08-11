@@ -61,8 +61,7 @@ sub init(@list) {
 }
 
 class Calc2er {
-	method TOP($/) { make $<func>.made()([], ()) }
-	method func($/) {}
+	method TOP($/) { make $<func>.made()((), ()) }
 }
 
 say Calc2.parse(get(), actions => Calc2er).made while True;
