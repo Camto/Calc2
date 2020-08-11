@@ -74,11 +74,6 @@ class Calc2er {
 		}
 		die
 	} }
-	
-	method case($match) { make sub (@stack, @scopes) {
-		die;
-		return append(@stack, 3)
-	} }
 }
 
 say Calc2.parse(get(), actions => Calc2er).made while True;
