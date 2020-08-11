@@ -52,6 +52,14 @@ grammar Calc2 {
 	rule patt_ident { '@' <ident> }
 }
 
+sub append(@list, $elem) {
+	|@list, $elem
+}
+
+sub init(@list) {
+	@list.head(*-1)
+}
+
 class Calc2er {
 	method TOP($/) { make $<func>.made()([], ()) }
 	method func($/) {}
