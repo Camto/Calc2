@@ -57,11 +57,24 @@ sub append(@list, $elem) {
 }
 
 sub init(@list) {
-	@list.head(*-1)
+	@list.head: *-1
 }
 
 class Calc2er {
 	method TOP($/) { make $<func>.made()((), ()) }
+	
+	method func($match) { $match.make: sub (@stack, @scopes) {
+		for $match<case> -> $case {
+			return $case.made()(@stack, @scopes);
+			CATCH { }
+		}
+		die
+	} }
+	
+	method case($match) { make sub (@stack, @scopes) {
+		die;
+		return append(@stack, 3)
+	} }
 }
 
 say Calc2.parse(get(), actions => Calc2er).made while True;
