@@ -1,5 +1,5 @@
 grammar Calc2 {
-	rule TOP { <var_decls>? <expr> }
+	rule TOP { <func> }
 	
 	rule func { <case>? ['|' <case>]* }
 	rule case { <patts>? <var_decls>? <expr> }
@@ -7,7 +7,8 @@ grammar Calc2 {
 	
 	rule expr { <expr_unit>* }
 	rule expr_unit {
-		|| <number>
+		|| <decimal>
+		|| <integer>
 		|| <obj_destr>
 		|| <obj_make>
 		|| <ident>
@@ -19,7 +20,8 @@ grammar Calc2 {
 		|| <func_expr>
 		|| <match>
 	}
-	token number { \d+ ['.' \d+]? }
+	token decimal { \d+ '.' \d+ }
+	token integer { \d+ }
 	token obj_destr { <obj> '?' }
 	token obj_make { '`'* <obj> }
 	token obj { '()' || <:Lu> \w* }
@@ -50,4 +52,9 @@ grammar Calc2 {
 	rule patt_ident { '@' <ident> }
 }
 
-say Calc2.parse: get() while True;
+class Calc2er {
+	method TOP($/) { make $<func>.made()([], ()) }
+	method func($/) {}
+}
+
+say Calc2.parse(get(), actions => Calc2er).made while True;
