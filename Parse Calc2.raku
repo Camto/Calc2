@@ -60,6 +60,10 @@ sub init(@list) {
 	@list.head: *-1
 }
 
+sub concat(@list1, @list2) {
+	|@list1, |@list2
+}
+
 class Calc2er {
 	method TOP($/) { make $<func>.made()((), ()) }
 	
