@@ -2,30 +2,30 @@ grammar Calc2 {
 	rule TOP { <func> }
 	
 	rule func { <case>? ['|' <case>]* }
-	rule case { <patts>? <var_decls>? <expr> }
+	rule case { <patts>? <var-decls>? <expr> }
 	rule patts { <patt>? [',' <patt>]* '->' }
 	
-	rule expr { <expr_unit>* }
-	rule expr_unit {
+	rule expr { <expr-unit>* }
+	rule expr-unit {
 		|| <complicated>
 		|| <decimal>
 		|| <integer>
-		|| <obj_destr>
-		|| <obj_make>
+		|| <obj-destr>
+		|| <obj-make>
 		|| <ident>
 		|| <op>
 		|| <string>
 		|| <quote>
 		|| '[' <func> ']'
-		|| <infix_tuple>
-		|| <func_expr>
+		|| <infix-tuple>
+		|| <func-expr>
 		|| <match>
 	}
 	token complicated { [\d+ ['.' \d+]? '+']? \d+ ['.' \d+]? 'i' }
 	token decimal { \d+ '.' \d+ }
 	token integer { \d+ }
-	token obj_destr { <obj> '?' }
-	token obj_make { '`'* <obj> }
+	token obj-destr { <obj> '?' }
+	token obj-make { '`'* <obj> }
 	token obj { '()' || <:Lu> \w* }
 	token ident { [<:Ll> || '_'] \w* '?'? }
 	token op {
@@ -41,17 +41,17 @@ grammar Calc2 {
 		| '<<?' | '>>?'
 	}
 	token string { '"' ['\\' . || <-["]>]* '"' }
-	rule quote { "'" <expr_unit> }
-	rule infix_tuple { '(' <expr>? [',' <expr>]* ')' }
-	rule func_expr { '{' <func> '}' }
+	rule quote { "'" <expr-unit> }
+	rule infix-tuple { '(' <expr>? [',' <expr>]* ')' }
+	rule func-expr { '{' <func> '}' }
 	rule match { ':' <![=]> <func> }
 	
-	rule var_decls { [<var_decl> || <var_pipe_decl>]+ }
-	rule var_decl { <patt> ':=' <expr> ';' }
-	rule var_pipe_decl { <patt> '|=' <expr> ';' }
+	rule var-decls { [<var-decl> || <var-pipe-decl>]+ }
+	rule var-decl { <patt> ':=' <expr> ';' }
+	rule var-pipe-decl { <patt> '|=' <expr> ';' }
 	
-	rule patt { [<expr_unit> || <patt_ident>]* }
-	rule patt_ident { '@' <ident> }
+	rule patt { [<expr-unit> || <patt-ident>]* }
+	rule patt-ident { '@' <ident> }
 }
 
 sub append(@list, $elem) {
@@ -106,7 +106,7 @@ class Calc2er {
 			} }
 			
 			if not $! {
-				(@new-stack, my @new-scope) = $case<var_decls>.made()(@new-stack, @scopes) if $case<var_decls>;
+				(@new-stack, my @new-scope) = $case<var-decls>.made()(@new-stack, @scopes) if $case<var-decls>;
 				@scopes = append(@scopes, @new-scope);
 				return $case<expr>.made()(@new-stack, @scopes), @scopes;
 			}
@@ -120,8 +120,8 @@ class Calc2er {
 	
 	method expr($match) { $match.make: sub (@stack, @scopes) {
 		my @new-stack = @stack;
-		for $match<expr_unit> -> $expr_unit {
-			@new-stack = $expr_unit.values[0].made()(@new-stack, @scopes)
+		for $match<expr-unit> -> $expr-unit {
+			@new-stack = $expr-unit.values[0].made()(@new-stack, @scopes)
 		}
 		say @new-stack;
 		@new-stack
@@ -137,6 +137,16 @@ class Calc2er {
 	
 	method integer($match) { $match.make: sub (@stack, @scopes) {
 		append(@stack, Integer.new: val => $match.Int);
+	} }
+	
+	method obj-make($match) { $match.make: sub (@stack, @scopes) {
+		my $tag = $match<obj>.Str;
+		$tag = 'Tup' if $tag eq '()';
+		my $obj-len = ($match ~~ /'`'*/).chars;
+		append(
+			@stack.head(*-$obj-len),
+			Obj.new: tag => $tag, vals => @stack.tail($obj-len)
+		)
 	} }
 }
 
