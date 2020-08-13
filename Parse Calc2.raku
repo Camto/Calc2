@@ -139,13 +139,23 @@ class Calc2er {
 		append(@stack, Integer.new: val => $match.Int);
 	} }
 	
+	method obj-destr($match) { $match.make: sub (@stack, @scopes) {
+		my $tag = $match<obj>.Str;
+		$tag = 'Tup' if $tag eq '()';
+		my $obj = @stack[*-1];
+		given $obj.type {
+			when Obj-Val { concat(init(@stack), $obj.vals.reverse) }
+			default { say 'NOT IMPLEMENTED YET AAA'; @stack }
+		}
+	} }
+	
 	method obj-make($match) { $match.make: sub (@stack, @scopes) {
 		my $tag = $match<obj>.Str;
 		$tag = 'Tup' if $tag eq '()';
 		my $obj-len = ($match ~~ /'`'*/).chars;
 		append(
 			@stack.head(*-$obj-len),
-			Obj.new: tag => $tag, vals => @stack.tail($obj-len)
+			Obj.new: tag => $tag, vals => @stack.tail($obj-len).reverse
 		)
 	} }
 }
