@@ -160,5 +160,5 @@ class Calc2er {
 	} }
 }
 
-say Calc2.parse(get(), actions => Calc2er).made while True;
+say Calc2.parse(get, actions => Calc2er).made while True;
 # say Calc2.parse: get while True;
