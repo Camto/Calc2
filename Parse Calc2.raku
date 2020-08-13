@@ -7,6 +7,7 @@ grammar Calc2 {
 	
 	rule expr { <expr_unit>* }
 	rule expr_unit {
+		|| <complicated>
 		|| <decimal>
 		|| <integer>
 		|| <obj_destr>
@@ -20,6 +21,7 @@ grammar Calc2 {
 		|| <func_expr>
 		|| <match>
 	}
+	token complicated { [\d+ ['.' \d+]? '+']? \d+ ['.' \d+]? 'i' }
 	token decimal { \d+ '.' \d+ }
 	token integer { \d+ }
 	token obj_destr { <obj> '?' }
@@ -97,6 +99,10 @@ class Calc2er {
 		@new-stack
 	} }
 	
+	method complicated($match) { $match.make: sub (@stack, @scopes) {
+		append(@stack, $match.Complex);
+	} }
+	
 	method decimal($match) { $match.make: sub (@stack, @scopes) {
 		append(@stack, $match.Num);
 	} }
@@ -106,4 +112,5 @@ class Calc2er {
 	} }
 }
 
-say Calc2.parse(get(), actions => Calc2er).made while True;
+#say Calc2.parse(get(), actions => Calc2er).made while True;
+say Calc2.parse: get while True;
