@@ -68,16 +68,17 @@ class Calc2er {
 	method TOP($/) { make $<func>.made()((), ()) }
 	
 	method func($match) { $match.make: sub (@stack, @scopes) {
+		my @new-stack = @stack;
 		for $match<case> -> $case {
 			try { if $case<patts> {
-				@stack, my @new-scope = $case<patts>.made()(@stack, @scopes);
+				(@new-stack, my @new-scope) = $case<patts>.made()(@new-stack, @scopes);
 				@scopes = append(@scopes, @new-scope);
 			} }
 			
 			if not $! {
-				@stack, my @new-scope = $case<var_decls>.made()(@stack, @scopes) if $case<var_decls>;
+				(@new-stack, my @new-scope) = $case<var_decls>.made()(@new-stack, @scopes) if $case<var_decls>;
 				@scopes = append(@scopes, @new-scope);
-				return $case<expr>.made()(@stack, @scopes), @scopes;
+				return $case<expr>.made()(@new-stack, @scopes), @scopes;
 			}
 		}
 		die
@@ -88,7 +89,20 @@ class Calc2er {
 	} }
 	
 	method expr($match) { $match.make: sub (@stack, @scopes) {
-		append(@stack, 3)
+		my @new-stack = @stack;
+		for $match<expr_unit> -> $expr_unit {
+			@new-stack = $expr_unit.values[0].made()(@new-stack, @scopes)
+		}
+		say @new-stack;
+		@new-stack
+	} }
+	
+	method decimal($match) { $match.make: sub (@stack, @scopes) {
+		append(@stack, $match.Num);
+	} }
+	
+	method integer($match) { $match.make: sub (@stack, @scopes) {
+		append(@stack, $match.Int);
 	} }
 }
 
