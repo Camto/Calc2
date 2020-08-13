@@ -172,9 +172,13 @@ class Calc2er {
 		)
 	} }
 	
-	# For now all operators are `do`.
-	method op($match) { $match.make: sub (@stack, @scopes) {
-		@stack[*-1].val.made()(init(@stack), @scopes)
+	# For testing.
+	method ident($match) { $match.make: sub (@stack, @scopes) {
+		given $match.Str {
+			when 'dup' { append(@stack, @stack[*-1]) }
+			when 'drop' { init(@stack) }
+			when 'do' { @stack[*-1].val.made()(init(@stack), @scopes) }
+		}
 	} }
 	
 	method string($match) { $match.make: sub (@stack, @scopes) {
