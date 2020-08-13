@@ -123,7 +123,6 @@ class Calc2er {
 		for $match<expr-unit> -> $expr-unit {
 			@new-stack = $expr-unit.values[0].made()(@new-stack, @scopes)
 		}
-		say @new-stack;
 		@new-stack
 	} }
 	
