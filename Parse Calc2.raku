@@ -112,5 +112,12 @@ class Calc2er {
 	} }
 }
 
+enum Type <
+	Obj-Val
+	Complicated-Val Decimal-Val Integer-Val
+>;
+
+class Val { has Type $.type }
+
 say Calc2.parse(get(), actions => Calc2er).made while True;
 # say Calc2.parse: get while True;
