@@ -106,14 +106,10 @@ class Func {
 	has $.val;
 }
 
-my %built-ins =
-	dup => -> @stack, @scopes { append(@stack, @stack[*-1]) },
-	drop => -> @stack, @scopes { init(@stack) },
-	do => -> @stack, @scopes { @stack[*-1].val.made()(init(@stack), @scopes) }
-;
+my %prelude;
 
 class Calc2er {
-	method TOP($/) { make $<func>.made()((), ()) }
+	method TOP($/) { make $<func>.made }
 	
 	method func($match) { $match.make: sub (@stack, @scopes) {
 		my @new-stack = @stack;
@@ -181,7 +177,7 @@ class Calc2er {
 	# For testing.
 	method ident($match) { $match.make: sub (@stack, @scopes) {
 		my $name = $match.Str;
-		%built-ins{$name}(@stack, @scopes) if %built-ins{$name}:exists
+		%prelude{$name}(@stack, @scopes) if %prelude{$name}:exists
 	} }
 	
 	method string($match) { $match.make: sub (@stack, @scopes) {
@@ -224,5 +220,13 @@ class Calc2er {
 	method match($/) { make $<func>.made }
 }
 
-say Calc2.parse(get, actions => Calc2er).made while True;
+%prelude = {
+	dup => "a-> 'a 'a",
+	drop => '_->',
+	do => 'fn-> fn',
+	swap => "a b-> 'a 'b",
+	id => "a-> 'a"
+}>>.map: { Calc2.parse($_, actions => Calc2er).made };
+
+say Calc2.parse(get, actions => Calc2er).made()((), ()) while True;
 # say Calc2.parse: get while True;
