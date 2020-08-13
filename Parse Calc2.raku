@@ -119,5 +119,11 @@ enum Type <
 
 class Val { has Type $.type }
 
+class Obj is Val {
+	has $.type = Obj-Val;
+	has Str $.tag;
+	has @.vals;
+}
+
 say Calc2.parse(get(), actions => Calc2er).made while True;
 # say Calc2.parse: get while True;
