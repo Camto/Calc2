@@ -101,13 +101,13 @@ class Calc2er {
 		my @new-stack = @stack;
 		for $match<case> -> $case {
 			try { if $case<patts> {
-				(@new-stack, my @new-scope) = $case<patts>.made()(@new-stack, @scopes);
-				@scopes = append(@scopes, @new-scope);
+				(@new-stack, my %new-scope) = $case<patts>.made()(@new-stack, @scopes);
+				@scopes = append(@scopes, %new-scope);
 			} }
 			
 			if not $! {
-				(@new-stack, my @new-scope) = $case<var-decls>.made()(@new-stack, @scopes) if $case<var-decls>;
-				@scopes = append(@scopes, @new-scope);
+				(@new-stack, my %new-scope) = $case<var-decls>.made()(@new-stack, @scopes) if $case<var-decls>;
+				@scopes = append(@scopes, %new-scope);
 				return $case<expr>.made()(@new-stack, @scopes), @scopes;
 			}
 		}
