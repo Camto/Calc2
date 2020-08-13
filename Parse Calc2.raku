@@ -175,6 +175,17 @@ class Calc2er {
 		append(@stack, Func.new: val => $match<expr-unit>)
 	} }
 	
+	method infix-tuple($match) { $match.make: sub (@stack, @scopes) {
+		my @tuple = [];
+		my @new-stack = @stack;
+		for $match<expr> -> $expr {
+			@new-stack = $expr.made()(@new-stack, @scopes);
+			@tuple.push(@new-stack[*-1]);
+			@new-stack = init(@new-stack);
+		}
+		append(@new-stack, Obj.new: tag => 'Tup', vals => @tuple)
+	} }
+	
 	method func-expr($match) { $match.make: sub (@stack, @scopes) {
 		append(@stack, Func.new: val => $match<func>)
 	} }
