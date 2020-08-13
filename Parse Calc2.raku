@@ -192,7 +192,7 @@ class Calc2er {
 			elsif $_ ne '\\' { @string.push($_) }
 			else { $escaping = True }
 		}
-		append(@stack, String.new: val => @string.join);
+		append(@stack, String.new: val => @string.join)
 	} }
 	
 	method quote($match) { $match.make: sub (@stack, @scopes) {
