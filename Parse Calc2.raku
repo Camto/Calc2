@@ -69,6 +69,7 @@ sub concat(@list1, @list2) {
 enum Type <
 	Obj-Val
 	Complicated-Val Decimal-Val Integer-Val
+	String-Val
 	Func-Val
 >;
 
@@ -93,6 +94,11 @@ class Decimal {
 class Integer {
 	has $.type = Integer-Val;
 	has Int $.val;
+}
+
+class String {
+	has $.type = String-Val;
+	has Str $.val;
 }
 
 class Func {
@@ -169,6 +175,24 @@ class Calc2er {
 	# For now all operators are `do`.
 	method op($match) { $match.make: sub (@stack, @scopes) {
 		@stack[*-1].val.made()(init(@stack), @scopes)
+	} }
+	
+	method string($match) { $match.make: sub (@stack, @scopes) {
+		my @string = [];
+		my Bool $escaping = False;
+		for $match.Str.split('').head(*-2).tail(*-2) {
+			if $escaping {
+				given $_ {
+					when 'n' { @string.push("\n") }
+					when 't' { @string.push("\t") }
+					default { @string.push($_) }
+				}
+				$escaping = False;
+			}
+			elsif $_ ne '\\' { @string.push($_) }
+			else { $escaping = True }
+		}
+		append(@stack, String.new: val => @string.join);
 	} }
 	
 	method quote($match) { $match.make: sub (@stack, @scopes) {
