@@ -66,6 +66,34 @@ sub concat(@list1, @list2) {
 	|@list1, |@list2
 }
 
+enum Type <
+	Obj-Val
+	Complicated-Val Decimal-Val Integer-Val
+>;
+
+class Val { has Type $.type }
+
+class Obj is Val {
+	has $.type = Obj-Val;
+	has Str $.tag;
+	has @.vals;
+}
+
+class Complicated {
+	has $.type = Complicated-Val;
+	has Complex $.val;
+}
+
+class Decimal {
+	has $.type = Decimal-Val;
+	has Num $.val;
+}
+
+class Integer {
+	has $.type = Integer-Val;
+	has Int $.val;
+}
+
 class Calc2er {
 	method TOP($/) { make $<func>.made()((), ()) }
 	
@@ -100,29 +128,16 @@ class Calc2er {
 	} }
 	
 	method complicated($match) { $match.make: sub (@stack, @scopes) {
-		append(@stack, $match.Complex);
+		append(@stack, Complicated.new: val => $match.Complex);
 	} }
 	
 	method decimal($match) { $match.make: sub (@stack, @scopes) {
-		append(@stack, $match.Num);
+		append(@stack, Decimal.new: val => $match.Num);
 	} }
 	
 	method integer($match) { $match.make: sub (@stack, @scopes) {
-		append(@stack, $match.Int);
+		append(@stack, Integer.new: val => $match.Int);
 	} }
-}
-
-enum Type <
-	Obj-Val
-	Complicated-Val Decimal-Val Integer-Val
->;
-
-class Val { has Type $.type }
-
-class Obj is Val {
-	has $.type = Obj-Val;
-	has Str $.tag;
-	has @.vals;
 }
 
 say Calc2.parse(get(), actions => Calc2er).made while True;
