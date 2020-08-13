@@ -106,6 +106,12 @@ class Func {
 	has $.val;
 }
 
+my %built-ins =
+	dup => -> @stack, @scopes { append(@stack, @stack[*-1]) },
+	drop => -> @stack, @scopes { init(@stack) },
+	do => -> @stack, @scopes { @stack[*-1].val.made()(init(@stack), @scopes) }
+;
+
 class Calc2er {
 	method TOP($/) { make $<func>.made()((), ()) }
 	
@@ -120,7 +126,7 @@ class Calc2er {
 			if not $! {
 				(@new-stack, my %new-scope) = $case<var-decls>.made()(@new-stack, @scopes) if $case<var-decls>;
 				@scopes = append(@scopes, %new-scope);
-				return $case<expr>.made()(@new-stack, @scopes), @scopes;
+				return $case<expr>.made()(@new-stack, @scopes);
 			}
 		}
 		die
@@ -174,11 +180,8 @@ class Calc2er {
 	
 	# For testing.
 	method ident($match) { $match.make: sub (@stack, @scopes) {
-		given $match.Str {
-			when 'dup' { append(@stack, @stack[*-1]) }
-			when 'drop' { init(@stack) }
-			when 'do' { @stack[*-1].val.made()(init(@stack), @scopes) }
-		}
+		my $name = $match.Str;
+		%built-ins{$name}(@stack, @scopes) if %built-ins{$name}:exists
 	} }
 	
 	method string($match) { $match.make: sub (@stack, @scopes) {
