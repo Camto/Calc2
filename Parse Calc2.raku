@@ -69,10 +69,26 @@ class Calc2er {
 	
 	method func($match) { $match.make: sub (@stack, @scopes) {
 		for $match<case> -> $case {
-			return $case.made()(@stack, @scopes);
-			CATCH { }
+			try { if $case<patts> {
+				@stack, my @new-scope = $case<patts>.made()(@stack, @scopes);
+				@scopes = append(@scopes, @new-scope);
+			} }
+			
+			if not $! {
+				@stack, my @new-scope = $case<var_decls>.made()(@stack, @scopes) if $case<var_decls>;
+				@scopes = append(@scopes, @new-scope);
+				return $case<expr>.made()(@stack, @scopes), @scopes;
+			}
 		}
 		die
+	} }
+	
+	method patts($match) { $match.make: sub (@stack, @scopes) {
+		die
+	} }
+	
+	method expr($match) { $match.make: sub (@stack, @scopes) {
+		append(@stack, 3)
 	} }
 }
 
