@@ -69,6 +69,7 @@ sub concat(@list1, @list2) {
 enum Type <
 	Obj-Val
 	Complicated-Val Decimal-Val Integer-Val
+	Func-Val
 >;
 
 class Val { has Type $.type }
@@ -92,6 +93,11 @@ class Decimal {
 class Integer {
 	has $.type = Integer-Val;
 	has Int $.val;
+}
+
+class Func {
+	has $.type = Func-Val;
+	has $.val;
 }
 
 class Calc2er {
@@ -121,10 +127,12 @@ class Calc2er {
 	method expr($match) { $match.make: sub (@stack, @scopes) {
 		my @new-stack = @stack;
 		for $match<expr-unit> -> $expr-unit {
-			@new-stack = $expr-unit.values[0].made()(@new-stack, @scopes)
+			@new-stack = $expr-unit.made()(@new-stack, @scopes)
 		}
 		@new-stack
 	} }
+	
+	method expr-unit($/) { make $/.values[0].made() }
 	
 	method complicated($match) { $match.make: sub (@stack, @scopes) {
 		append(@stack, Complicated.new: val => $match.Complex);
@@ -157,6 +165,21 @@ class Calc2er {
 			Obj.new: tag => $tag, vals => @stack.tail($obj-len).reverse
 		)
 	} }
+	
+	# For now all operators are `do`.
+	method op($match) { $match.make: sub (@stack, @scopes) {
+		@stack[*-1].val.made()(init(@stack), @scopes)
+	} }
+	
+	method quote($match) { $match.make: sub (@stack, @scopes) {
+		append(@stack, Func.new: val => $match<expr-unit>)
+	} }
+	
+	method func-expr($match) { $match.make: sub (@stack, @scopes) {
+		append(@stack, Func.new: val => $match<func>)
+	} }
+	
+	method match($/) { make $<func>.made }
 }
 
 say Calc2.parse(get, actions => Calc2er).made while True;
