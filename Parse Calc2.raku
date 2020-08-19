@@ -198,8 +198,15 @@ class Calc2er {
 	} }
 	
 	# For testing.
-	method ident($match) { $match.make: sub (@stack, @scopes) {
-		my $name = $match.Str
+	method ident($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+		my $name = $match.Str;
+		given $name {
+			when 'do' {
+				my $intermediate = @stack[*-1].val.made()(init(@stack), $depth-affected, @scopes);
+				$intermediate[1] = depth-update($intermediate[1], 1, 0);
+				$intermediate
+			}
+		}
 	} }
 	
 	method string($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
@@ -246,13 +253,17 @@ class Calc2er {
 	method match($/) { make $<func>.made }
 }
 
+#`(
 my $prelude = "
 	dup := \{a-> 'a 'a} ;
 	drop := \{_->} ;
 	do := \{fn-> fn} ;
 	swap := \{a b-> 'a 'b} ;
-	id := {}
+	id := \{} ;
 ";
+)
 
-say Calc2.parse(get ~ $prelude, actions => Calc2er).made()([], 0, []) while True;
+my $prelude = "";
+
+say Calc2.parse($prelude ~ get, actions => Calc2er).made()([], 0, []) while True;
 # say Calc2.parse: get while True;
