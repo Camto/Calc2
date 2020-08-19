@@ -55,7 +55,7 @@ grammar Calc2 {
 }
 
 sub append(@list, $elem) {
-	|@list, $elem
+	(|@list, $elem).Array
 }
 
 sub init(@list) {
@@ -63,7 +63,11 @@ sub init(@list) {
 }
 
 sub concat(@list1, @list2) {
-	|@list1, |@list2
+	(|@list1, |@list2).Array
+}
+
+sub depth-update($depth-affected, $popped, $pushed) {
+	max(0, $depth-affected - $popped) + $pushed
 }
 
 enum Type <
@@ -106,81 +110,99 @@ class Func {
 	has $.val;
 }
 
-my %prelude;
-
 class Calc2er {
 	method TOP($/) { make $<func>.made }
 	
-	method func($match) { $match.make: sub (@stack, @scopes) {
+	method func($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
 		my @new-stack = @stack;
+		my $new-depth-affected = $depth-affected;
+		my @new-scopes = @scopes;
 		for $match<case> -> $case {
 			try { if $case<patts> {
-				(@new-stack, my %new-scope) = $case<patts>.made()(@new-stack, @scopes);
-				@scopes = append(@scopes, %new-scope);
+				my $dumb-tmp = $case<patts>.made()(@new-stack, $new-depth-affected, @new-scopes);
+				@new-stack = $dumb-tmp[0];
+				$new-depth-affected = $dumb-tmp[1];
+				@new-scopes = $dumb-tmp[2];
 			} }
 			
 			if not $! {
-				(@new-stack, my %new-scope) = $case<var-decls>.made()(@new-stack, @scopes) if $case<var-decls>;
-				@scopes = append(@scopes, %new-scope);
-				return $case<expr>.made()(@new-stack, @scopes);
+				if $case<var-decls> {
+					my $dumb-tmp = $case<var-decls>.made()(@new-stack, $new-depth-affected, @new-scopes);
+					@new-stack = $dumb-tmp[0];
+					$new-depth-affected = $dumb-tmp[1];
+					@new-scopes = $dumb-tmp[2];
+				}
+				return $case<expr>.made()(@new-stack, $new-depth-affected, @new-scopes);
 			}
 		}
 		die
 	} }
 	
 	method patts($match) { $match.make: sub (@stack, @scopes) {
-		die
+		my %new-scope = {};
+		
 	} }
 	
-	method expr($match) { $match.make: sub (@stack, @scopes) {
+	method patt($match) { $match.make: sub (@stack, @scopes) {
+		#
+	} }
+	
+	method expr($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
 		my @new-stack = @stack;
+		my $new-depth-affected = $depth-affected;
 		for $match<expr-unit> -> $expr-unit {
-			@new-stack = $expr-unit.made()(@new-stack, @scopes)
+			my $dumb-tmp = $expr-unit.made()(@new-stack, $new-depth-affected, @scopes);
+			say 'dump-tmp: ', $dumb-tmp;
+			@new-stack = $dumb-tmp[0];
+			say 'new-stack: ', $dumb-tmp[0];
+			say 'new-stack: ', @new-stack;
+			$new-depth-affected = $dumb-tmp[1];
 		}
-		@new-stack
+		@new-stack, $new-depth-affected
 	} }
 	
-	method expr-unit($/) { make $/.values[0].made() }
+	method expr-unit($/) { make $/.values[0].made }
 	
-	method complicated($match) { $match.make: sub (@stack, @scopes) {
-		append(@stack, Complicated.new: val => $match.Complex);
+	method complicated($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+		append(@stack, Complicated.new: val => $match.Complex), depth-update($depth-affected, 0, 1)
 	} }
 	
-	method decimal($match) { $match.make: sub (@stack, @scopes) {
-		append(@stack, Decimal.new: val => $match.Num);
+	method decimal($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+		append(@stack, Decimal.new: val => $match.Num), depth-update($depth-affected, 0, 1)
 	} }
 	
-	method integer($match) { $match.make: sub (@stack, @scopes) {
-		append(@stack, Integer.new: val => $match.Int);
+	method integer($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+		append(@stack, Integer.new: val => $match.Int), depth-update($depth-affected, 0, 1)
 	} }
 	
-	method obj-destr($match) { $match.make: sub (@stack, @scopes) {
+	method obj-destr($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
 		my $tag = $match<obj>.Str;
 		$tag = 'Tup' if $tag eq '()';
 		my $obj = @stack[*-1];
 		given $obj.type {
-			when Obj-Val { concat(init(@stack), $obj.vals.reverse) }
+			when Obj-Val {
+				concat(init(@stack), $obj.vals.reverse), depth-update($depth-affected, 1, $obj.elems)
+			}
 			default { say 'NOT IMPLEMENTED YET AAA'; @stack }
 		}
 	} }
 	
-	method obj-make($match) { $match.make: sub (@stack, @scopes) {
+	method obj-make($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
 		my $tag = $match<obj>.Str;
 		$tag = 'Tup' if $tag eq '()';
 		my $obj-len = ($match ~~ /'`'*/).chars;
 		append(
 			@stack.head(*-$obj-len),
 			Obj.new: tag => $tag, vals => @stack.tail($obj-len).reverse
-		)
+		), depth-update($depth-affected, $obj-len, 1)
 	} }
 	
 	# For testing.
 	method ident($match) { $match.make: sub (@stack, @scopes) {
-		my $name = $match.Str;
-		%prelude{$name}(@stack, @scopes) if %prelude{$name}:exists
+		my $name = $match.Str
 	} }
 	
-	method string($match) { $match.make: sub (@stack, @scopes) {
+	method string($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
 		my @string = [];
 		my Bool $escaping = False;
 		for $match.Str.split('').head(*-2).tail(*-2) {
@@ -195,38 +217,42 @@ class Calc2er {
 			elsif $_ ne '\\' { @string.push($_) }
 			else { $escaping = True }
 		}
-		append(@stack, String.new: val => @string.join)
+		append(@stack, String.new: val => @string.join), depth-update($depth-affected, 0, 1)
 	} }
 	
-	method quote($match) { $match.make: sub (@stack, @scopes) {
-		append(@stack, Func.new: val => $match<expr-unit>)
+	method quote($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+		append(@stack, Func.new: val => $match<expr-unit>), depth-update($depth-affected, 0, 1)
 	} }
 	
-	method infix-tuple($match) { $match.make: sub (@stack, @scopes) {
+	method infix-tuple($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
 		my @tuple = [];
 		my @new-stack = @stack;
+		my $new-depth-affected = $depth-affected;
 		for $match<expr> -> $expr {
-			@new-stack = $expr.made()(@new-stack, @scopes);
+			my $dumb-tmp = $expr.made()(@new-stack, $new-depth-affected, @scopes);
+			@new-stack = $dumb-tmp[0];
+			$new-depth-affected = $dumb-tmp[1];
 			@tuple.push(@new-stack[*-1]);
 			@new-stack = init(@new-stack);
+			$new-depth-affected = depth-update($new-depth-affected, 1, 0);
 		}
-		append(@new-stack, Obj.new: tag => 'Tup', vals => @tuple)
+		append(@new-stack, Obj.new: tag => 'Tup', vals => @tuple), depth-update($new-depth-affected, 0, 1)
 	} }
 	
-	method func-expr($match) { $match.make: sub (@stack, @scopes) {
-		append(@stack, Func.new: val => $match<func>)
+	method func-expr($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+		append(@stack, Func.new: val => $match<func>), depth-update($depth-affected, 0, 1)
 	} }
 	
 	method match($/) { make $<func>.made }
 }
 
-%prelude = {
-	dup => "a-> 'a 'a",
-	drop => '_->',
-	do => 'fn-> fn',
-	swap => "a b-> 'a 'b",
-	id => "a-> 'a"
-}>>.map: { Calc2.parse($_, actions => Calc2er).made };
+my $prelude = "
+	dup := \{a-> 'a 'a} ;
+	drop := \{_->} ;
+	do := \{fn-> fn} ;
+	swap := \{a b-> 'a 'b} ;
+	id := {}
+";
 
-say Calc2.parse(get, actions => Calc2er).made()((), ()) while True;
+say Calc2.parse(get ~ $prelude, actions => Calc2er).made()([], 0, []) while True;
 # say Calc2.parse: get while True;
