@@ -87,35 +87,6 @@ class Obj-Data {
 	has @.vals;
 }
 
-class Obj is Val {
-	has $.type = Obj-Val;
-}
-
-class Complicated {
-	has $.type = Complicated-Val;
-	has Complex $.val;
-}
-
-class Decimal {
-	has $.type = Decimal-Val;
-	has Num $.val;
-}
-
-class Integer {
-	has $.type = Integer-Val;
-	has Int $.val;
-}
-
-class String {
-	has $.type = String-Val;
-	has Str $.val;
-}
-
-class Func {
-	has $.type = Func-Val;
-	has $.val;
-}
-
 class Calc2er {
 	method TOP($/) { make $<func>.made }
 	
