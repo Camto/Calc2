@@ -77,12 +77,18 @@ enum Type <
 	Func-Val
 >;
 
-class Val { has Type $.type }
+class Val {
+	has Type $.type;
+	has $.val;
+}
+
+class Obj-Data {
+	has Str $.tag;
+	has @.vals;
+}
 
 class Obj is Val {
 	has $.type = Obj-Val;
-	has Str $.tag;
-	has @.vals;
 }
 
 class Complicated {
@@ -164,15 +170,15 @@ class Calc2er {
 	method expr-unit($/) { make $/.values[0].made }
 	
 	method complicated($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
-		append(@stack, Complicated.new: val => $match.Complex), depth-update($depth-affected, 0, 1)
+		append(@stack, Val.new: type => Complicated-Val, val => $match.Complex), depth-update($depth-affected, 0, 1)
 	} }
 	
 	method decimal($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
-		append(@stack, Decimal.new: val => $match.Num), depth-update($depth-affected, 0, 1)
+		append(@stack, Val.new: type => Decimal-Val, val => $match.Num), depth-update($depth-affected, 0, 1)
 	} }
 	
 	method integer($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
-		append(@stack, Integer.new: val => $match.Int), depth-update($depth-affected, 0, 1)
+		append(@stack, Val.new: type => Integer-Val, val => $match.Int), depth-update($depth-affected, 0, 1)
 	} }
 	
 	method obj-destr($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
@@ -181,7 +187,7 @@ class Calc2er {
 		my $obj = @stack[*-1];
 		given $obj.type {
 			when Obj-Val {
-				concat(init(@stack), $obj.vals.reverse), depth-update($depth-affected, 1, $obj.elems)
+				concat(init(@stack), $obj.val.vals.reverse), depth-update($depth-affected, 1, $obj.val.vals.elems)
 			}
 			default { say 'NOT IMPLEMENTED YET AAA'; @stack }
 		}
@@ -193,7 +199,7 @@ class Calc2er {
 		my $obj-len = ($match ~~ /'`'*/).chars;
 		append(
 			@stack.head(*-$obj-len),
-			Obj.new: tag => $tag, vals => @stack.tail($obj-len).reverse
+			Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag, vals => @stack.tail($obj-len).reverse
 		), depth-update($depth-affected, $obj-len, 1)
 	} }
 	
@@ -203,8 +209,7 @@ class Calc2er {
 		given $name {
 			when 'do' {
 				my $intermediate = @stack[*-1].val.made()(init(@stack), $depth-affected, @scopes);
-				$intermediate[1] = depth-update($intermediate[1], 1, 0);
-				$intermediate
+				($intermediate[0], depth-update($intermediate[1], 1, 0))
 			}
 		}
 	} }
@@ -224,11 +229,11 @@ class Calc2er {
 			elsif $_ ne '\\' { @string.push($_) }
 			else { $escaping = True }
 		}
-		append(@stack, String.new: val => @string.join), depth-update($depth-affected, 0, 1)
+		append(@stack, Val.new: type => String-Val, val => @string.join), depth-update($depth-affected, 0, 1)
 	} }
 	
 	method quote($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
-		append(@stack, Func.new: val => $match<expr-unit>), depth-update($depth-affected, 0, 1)
+		append(@stack, Val.new: type => Func-Val, val => $match<expr-unit>), depth-update($depth-affected, 0, 1)
 	} }
 	
 	method infix-tuple($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
@@ -243,11 +248,11 @@ class Calc2er {
 			@new-stack = init(@new-stack);
 			$new-depth-affected = depth-update($new-depth-affected, 1, 0);
 		}
-		append(@new-stack, Obj.new: tag => 'Tup', vals => @tuple), depth-update($new-depth-affected, 0, 1)
+		append(@new-stack, Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @tuple), depth-update($new-depth-affected, 0, 1)
 	} }
 	
 	method func-expr($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
-		append(@stack, Func.new: val => $match<func>), depth-update($depth-affected, 0, 1)
+		append(@stack, Val.new: type => Func-Val, val => $match<func>), depth-update($depth-affected, 0, 1)
 	} }
 	
 	method match($/) { make $<func>.made }
