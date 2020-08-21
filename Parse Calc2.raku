@@ -50,8 +50,10 @@ grammar Calc2 {
 	rule var-decl { <patt> ':=' <expr> ';' }
 	rule var-pipe-decl { <patt> '|=' <expr> ';' }
 	
-	rule patt { [<expr-unit> || <patt-ident>]* }
-	rule patt-ident { '@' <ident> }
+	rule patt { <patt-unit>* }
+	rule patt-unit { <patt-bind> || <patt-ident> || <expr-unit> }
+	token patt-bind { [<:Ll> || '_'] \w* '?'? }
+	token patt-ident { '@' <ident> }
 }
 
 sub append(@list, $elem) {
@@ -88,9 +90,9 @@ class Obj-Data {
 }
 
 enum Node-Type <
-	Func-Node Patt-Node Expr-Node
+	Func-Node Expr-Node Patts-Node
 	Obj-Make-Node Obj-Destr-Node Tuple-Node
-	Ident-Node Func-Expr-Node
+	Ident-Node Quote-Var-Node Bind-Node Func-Expr-Node
 	Complicated-Node Decimal-Node Integer-Node String-Node
 >;
 
@@ -100,8 +102,8 @@ class AST {
 }
 
 class Case-Data {
-	has @.patts;
-	has @.var-decls;
+	has $.patts;
+	has $.var-decls;
 	has $.expr;
 }
 
@@ -116,20 +118,25 @@ class Calc2er {
 	method func($match) {
 		$match.make: AST.new: type => Func-Node, val => (for $match<case> {
 			Case-Data.new:
-				patts => $_<patts> ?? [] !! [],
+				patts => $_<patts> ?? $_<patts>.made !! AST.new(type => Patts-Node, val => []),
 				var-decls => $_<var-decls> ?? [] !! [],
 				expr => $_<expr>.made
 		})
 	}
 	
-	method patts($match) { $match.make: sub (@stack, @scopes) {
-		my %new-scope = {};
-		
-	} }
+	method patts($match) {
+		$match.make: AST.new: type => Patts-Node, val => (for $match<patt> { $_.made })
+	}
 	
-	method patt($match) { $match.make: sub (@stack, @scopes) {
-		#
-	} }
+	method patt($match) {
+		$match.make: AST.new: type => Expr-Node, val => (for $match<patt-unit> { $_.made })
+	}
+	
+	method patt-unit($match) {
+		return $match.make: AST.new: type => Bind-Node, val => $match.Str.trim if $match<patt-bind>;
+		return $match.make: AST.new: type => Ident-Node, val => $match.Str.substr(1).trim if $match<patt-ident>;
+		return $match.make: $match<expr-unit>.made;
+	}
 	
 	method expr($match) {
 		$match.make: AST.new: type => Expr-Node, val => (for $match<expr-unit> { $_.made })
@@ -150,15 +157,15 @@ class Calc2er {
 	}
 	
 	method obj-destr($match) {
-		$match.make: AST.new: type => Obj-Destr-Node, val => $match<obj>.Str
+		$match.make: AST.new: type => Obj-Destr-Node, val => $match<obj>.Str.trim
 	}
 	
 	method obj-make($match) {
-		$match.make: AST.new: type => Obj-Make-Node, val => Obj-Make-Data.new: tag => $match<obj>.Str, len => ($match ~~ /'`'*/).chars
+		$match.make: AST.new: type => Obj-Make-Node, val => Obj-Make-Data.new: tag => $match<obj>.Str.trim, len => ($match ~~ /'`'*/).chars
 	}
 	
 	method ident($match) {
-		$match.make: AST.new: type => Ident-Node, val => $match.Str
+		$match.make: AST.new: type => Ident-Node, val => $match.Str.trim
 	}
 	
 	method op($match) {
@@ -179,7 +186,7 @@ class Calc2er {
 	method string($match) {
 		my @string = [];
 		my Bool $escaping = False;
-		for $match.Str.split('').head(*-2).tail(*-2) {
+		for $match.Str.trim.split('').head(*-2).tail(*-2) {
 			if $escaping {
 				given $_ {
 					when 'n' { @string.push("\n") }
@@ -195,7 +202,8 @@ class Calc2er {
 	}
 	
 	method quote($match) {
-		$match.make: AST.new: type => Func-Expr-Node, val => $match<expr-unit>.made
+		return $match.make: AST.new: type => Func-Expr-Node, val => $match<expr-unit>.made if $match<expr-unit>.made.type ne Ident-Node;
+		return $match.make: AST.new: type => Quote-Var-Node, val => $match<expr-unit>.made;
 	}
 	
 	method infix-tuple($match) {
@@ -209,43 +217,74 @@ class Calc2er {
 	method match($/) { make $<func>.made }
 }
 
+sub get-var(@scopes, $ident) {
+	for @scopes.reverse {
+		return $_{$ident} if $_{$ident}:exists
+	}
+	say 'BUILTINS HERE';
+}
+
 sub run($ast, @scopes) {
 	sub (@stack, $depth-affected) {
 		given $ast.type {
 			when Func-Node {
+				my @new-scopes = append(@scopes, {});
 				my @new-stack = @stack;
 				my $new-depth-affected = $depth-affected;
-				my @new-scopes = @scopes;
 				for $ast.val -> $case {
-					try { if $case.patts {
-						my $dumb-tmp = $case<patts>.made()(@new-stack, $new-depth-affected, @new-scopes);
-						@new-stack = $dumb-tmp[0];
-						$new-depth-affected = $dumb-tmp[1];
-						@new-scopes = $dumb-tmp[2];
-					} }
+					try {
+						my $dumb-tmp = run($case.patts, @new-scopes)(@new-stack, $new-depth-affected);
+						@new-scopes = $dumb-tmp[0];
+						@new-stack = $dumb-tmp[1];
+						$new-depth-affected = $dumb-tmp[2];
+					}
 					
 					if not $! {
 						if $case.var-decls {
-							my $dumb-tmp = $case<var-decls>.made()(@new-stack, $new-depth-affected, @new-scopes);
-							@new-stack = $dumb-tmp[0];
-							$new-depth-affected = $dumb-tmp[1];
-							@new-scopes = $dumb-tmp[2];
+							my $dumb-tmp = run($case.var-decls, @new-scopes)(@new-stack, $new-depth-affected);
+							@new-scopes = $dumb-tmp[0];
+							@new-stack = $dumb-tmp[1];
+							$new-depth-affected = $dumb-tmp[2];
 						}
-						return run($case.expr, @new-scopes)(@new-stack, $new-depth-affected);
+						my $dumb-tmp = run($case.expr, @new-scopes)(@new-stack, $new-depth-affected);
+						@new-stack = $dumb-tmp[1];
+						$new-depth-affected = $dumb-tmp[2];
+						return @new-stack, $new-depth-affected;
 					}
 				}
 				die
 			}
 			
 			when Expr-Node {
+				my @new-scopes = @scopes;
 				my @new-stack = @stack;
 				my $new-depth-affected = $depth-affected;
 				for $ast.val -> $expr-unit {
-					my $dumb-tmp = run($expr-unit, @scopes)(@new-stack, $new-depth-affected);
-					@new-stack = $dumb-tmp[0];
-					$new-depth-affected = $dumb-tmp[1];
+					if not $expr-unit.type == Bind-Node {
+						my $dumb-tmp = run($expr-unit, @scopes)(@new-stack, $new-depth-affected);
+						@new-stack = $dumb-tmp[0];
+						$new-depth-affected = $dumb-tmp[1];
+					} else {
+						die if @new-stack.elems == 0;
+						@new-scopes[*-1]{$expr-unit.val} = @new-stack[*-1];
+						@new-stack = init(@new-stack);
+						$new-depth-affected = depth-update($new-depth-affected, 1, 0);
+					}
 				}
-				@new-stack, $new-depth-affected
+				@new-scopes, @new-stack, $new-depth-affected
+			}
+			
+			when Patts-Node {
+				my @new-scopes = @scopes;
+				my @new-stack = @stack;
+				my $new-depth-affected = $depth-affected;
+				for $ast.val -> $patt {
+					my $dumb-tmp = run($patt, @new-scopes)(@new-stack, $new-depth-affected);
+					@new-scopes = $dumb-tmp[0];
+					@new-stack = $dumb-tmp[1];
+					$new-depth-affected = $dumb-tmp[2];
+				}
+				@new-scopes, @new-stack, $new-depth-affected
 			}
 			
 			when Complicated-Node {
@@ -285,12 +324,15 @@ sub run($ast, @scopes) {
 			}
 			
 			when Ident-Node {
-				my $intermediate = @stack[*-1].val()(init(@stack), $depth-affected);
-				$intermediate[0], depth-update($intermediate[1], 1, 0)
+				get-var(@scopes, $ast.val).val()(@stack, $depth-affected)
 			}
 			
 			when String-Node {
 				append(@stack, Val.new: type => String-Val, val => $ast.val), depth-update($depth-affected, 0, 1)
+			}
+			
+			when Quote-Var-Node {
+				append(@stack, get-var(@scopes, $ast.val.val)), depth-update($depth-affected, 0, 1)
 			}
 			
 			when Func-Expr-Node {
@@ -325,8 +367,14 @@ my $prelude = "
 ";
 )
 
-my $prelude = "";
+my $prelude = "
+	\{a-> 'a 'a} dup
+	\{_->} drop
+	\{fn-> fn} do
+	\{a b-> 'a 'b} swap
+	\{} id
+";
 
 say run(Calc2.parse($prelude ~ get, actions => Calc2er).made, [])([], 0) while True;
 # say Calc2.parse($prelude ~ get, actions => Calc2er).made while True;
-# say Calc2.parse: get while True;
+# say Calc2.parse: $prelude ~ get while True;
