@@ -105,6 +105,11 @@ class Case-Data {
 	has $.expr;
 }
 
+class Obj-Make-Data {
+	has Str $.tag;
+	has Int $.len;
+}
+
 class Calc2er {
 	method TOP($/) { make $<func>.made }
 	
@@ -176,7 +181,9 @@ class Calc2er {
 		$match.make: AST.new: type => Integer-Node, val => $match.Int
 	}
 	
-	method obj-destr($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+	method obj-destr($match) {
+		$match.make: AST.new: type => Obj-Destr-Node, val => $match<obj>.Str
+		#`(
 		my $tag = $match<obj>.Str;
 		$tag = 'Tup' if $tag eq '()';
 		my $obj = @stack[*-1];
@@ -186,9 +193,12 @@ class Calc2er {
 			}
 			default { say 'NOT IMPLEMENTED YET AAA'; @stack }
 		}
-	} }
+		)
+	}
 	
-	method obj-make($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+	method obj-make($match) {
+		$match.make: AST.new: type => Obj-Make-Node, val => Obj-Make-Data.new: tag => $match<obj>.Str, len => ($match ~~ /'`'*/).chars
+		#`(
 		my $tag = $match<obj>.Str;
 		$tag = 'Tup' if $tag eq '()';
 		my $obj-len = ($match ~~ /'`'*/).chars;
@@ -196,7 +206,8 @@ class Calc2er {
 			@stack.head(*-$obj-len),
 			Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag, vals => @stack.tail($obj-len).reverse
 		), depth-update($depth-affected, $obj-len, 1)
-	} }
+		)
+	}
 	
 	# For testing.
 	method ident($match) {
@@ -306,6 +317,28 @@ sub run($ast, @scopes) {
 			
 			when Integer-Node {
 				append(@stack, Val.new: type => Integer-Val, val => $ast.val), depth-update($depth-affected, 0, 1)
+			}
+			
+			when Obj-Destr-Node {
+				my $tag = $ast.val;
+				$tag = 'Tup' if $tag eq '()';
+				my $obj = @stack[*-1];
+				given $obj.type {
+					when Obj-Val {
+						concat(init(@stack), $obj.val.vals.reverse), depth-update($depth-affected, 1, $obj.val.vals.elems)
+					}
+					default { say 'NOT IMPLEMENTED YET AAA'; @stack }
+				}
+			}
+			
+			when Obj-Make-Node {
+				my $tag = $ast.val.tag;
+				$tag = 'Tup' if $tag eq '()';
+				my $obj-len = $ast.val.len;
+				append(
+					@stack.head(*-$obj-len),
+					Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag, vals => @stack.tail($obj-len).reverse
+				), depth-update($depth-affected, $obj-len, 1)
 			}
 			
 			when Ident-Node {
