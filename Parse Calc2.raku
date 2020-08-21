@@ -157,7 +157,6 @@ class Calc2er {
 		$match.make: AST.new: type => Obj-Make-Node, val => Obj-Make-Data.new: tag => $match<obj>.Str, len => ($match ~~ /'`'*/).chars
 	}
 	
-	# For testing.
 	method ident($match) {
 		$match.make: AST.new: type => Ident-Node, val => $match.Str
 	}
