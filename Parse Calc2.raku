@@ -176,7 +176,7 @@ class Calc2er {
 		}{$match.Str}
 	}
 	
-	method string($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+	method string($match) {
 		my @string = [];
 		my Bool $escaping = False;
 		for $match.Str.split('').head(*-2).tail(*-2) {
@@ -191,8 +191,8 @@ class Calc2er {
 			elsif $_ ne '\\' { @string.push($_) }
 			else { $escaping = True }
 		}
-		append(@stack, Val.new: type => String-Val, val => @string.join), depth-update($depth-affected, 0, 1)
-	} }
+		$match.make: AST.new: type => String-Node, val => @string.join
+	}
 	
 	method quote($match) {
 		$match.make: AST.new: type => Func-Expr-Node, val => $match<expr-unit>.made
@@ -298,6 +298,10 @@ sub run($ast, @scopes) {
 			when Ident-Node {
 				my $intermediate = run(@stack[*-1].val, @scopes)(init(@stack), $depth-affected);
 				$intermediate[0], depth-update($intermediate[1], 1, 0)
+			}
+			
+			when String-Node {
+				append(@stack, Val.new: type => String-Val, val => $ast.val), depth-update($depth-affected, 0, 1)
 			}
 			
 			when Func-Expr-Node {
