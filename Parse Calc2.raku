@@ -336,6 +336,7 @@ sub run($ast, @scopes) {
 				my $tag = $ast.val.tag;
 				$tag = 'Tup' if $tag eq '()';
 				my $obj-len = $ast.val.len;
+				die if @stack.elems < $obj-len;
 				append(
 					@stack.head(*-$obj-len),
 					Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag, vals => @stack.tail($obj-len).reverse
