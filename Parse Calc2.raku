@@ -120,30 +120,7 @@ class Calc2er {
 				var-decls => $_<var-decls> ?? [] !! [],
 				expr => $_<expr>.made
 		})
-		#`( $match.make: sub (@stack, $depth-affected, @scopes) {
-		my @new-stack = @stack;
-		my $new-depth-affected = $depth-affected;
-		my @new-scopes = @scopes;
-		for $match<case> -> $case {
-			try { if $case<patts> {
-				my $dumb-tmp = $case<patts>.made()(@new-stack, $new-depth-affected, @new-scopes);
-				@new-stack = $dumb-tmp[0];
-				$new-depth-affected = $dumb-tmp[1];
-				@new-scopes = $dumb-tmp[2];
-			} }
-			
-			if not $! {
-				if $case<var-decls> {
-					my $dumb-tmp = $case<var-decls>.made()(@new-stack, $new-depth-affected, @new-scopes);
-					@new-stack = $dumb-tmp[0];
-					$new-depth-affected = $dumb-tmp[1];
-					@new-scopes = $dumb-tmp[2];
-				}
-				return $case<expr>.made()(@new-stack, $new-depth-affected, @new-scopes);
-			}
-		}
-		die
-	} ) }
+	}
 	
 	method patts($match) { $match.make: sub (@stack, @scopes) {
 		my %new-scope = {};
@@ -156,16 +133,7 @@ class Calc2er {
 	
 	method expr($match) {
 		$match.make: AST.new: type => Expr-Node, val => (for $match<expr-unit> { $_.made })
-		#`( $match.make: sub (@stack, $depth-affected, @scopes) {
-		my @new-stack = @stack;
-		my $new-depth-affected = $depth-affected;
-		for $match<expr-unit> -> $expr-unit {
-			my $dumb-tmp = $expr-unit.made()(@new-stack, $new-depth-affected, @scopes);
-			@new-stack = $dumb-tmp[0];
-			$new-depth-affected = $dumb-tmp[1];
-		}
-		@new-stack, $new-depth-affected
-	} ) }
+	}
 	
 	method expr-unit($/) { make $/.values[0].made }
 	
@@ -183,44 +151,15 @@ class Calc2er {
 	
 	method obj-destr($match) {
 		$match.make: AST.new: type => Obj-Destr-Node, val => $match<obj>.Str
-		#`(
-		my $tag = $match<obj>.Str;
-		$tag = 'Tup' if $tag eq '()';
-		my $obj = @stack[*-1];
-		given $obj.type {
-			when Obj-Val {
-				concat(init(@stack), $obj.val.vals.reverse), depth-update($depth-affected, 1, $obj.val.vals.elems)
-			}
-			default { say 'NOT IMPLEMENTED YET AAA'; @stack }
-		}
-		)
 	}
 	
 	method obj-make($match) {
 		$match.make: AST.new: type => Obj-Make-Node, val => Obj-Make-Data.new: tag => $match<obj>.Str, len => ($match ~~ /'`'*/).chars
-		#`(
-		my $tag = $match<obj>.Str;
-		$tag = 'Tup' if $tag eq '()';
-		my $obj-len = ($match ~~ /'`'*/).chars;
-		append(
-			@stack.head(*-$obj-len),
-			Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag, vals => @stack.tail($obj-len).reverse
-		), depth-update($depth-affected, $obj-len, 1)
-		)
 	}
 	
 	# For testing.
 	method ident($match) {
 		$match.make: AST.new: type => Ident-Node, val => $match.Str
-		#`(
-		my $name = $match.Str;
-		given $name {
-			when 'do' {
-				my $intermediate = @stack[*-1].val.made()(init(@stack), $depth-affected, @scopes);
-				($intermediate[0], depth-update($intermediate[1], 1, 0))
-			}
-		}
-		)
 	}
 	
 	method op($match) {
@@ -277,7 +216,6 @@ class Calc2er {
 	
 	method func-expr($match) {
 		$match.make: AST.new: type => Func-Expr-Node, val => $match<func>.made
-		# append(@stack, Val.new: type => Func-Val, val => $match<func>), depth-update($depth-affected, 0, 1)
 	}
 	
 	method match($/) { make $<func>.made }
