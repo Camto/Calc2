@@ -198,20 +198,9 @@ class Calc2er {
 		$match.make: AST.new: type => Func-Expr-Node, val => $match<expr-unit>.made
 	}
 	
-	method infix-tuple($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
-		my @tuple = [];
-		my @new-stack = @stack;
-		my $new-depth-affected = $depth-affected;
-		for $match<expr> -> $expr {
-			my $dumb-tmp = $expr.made()(@new-stack, $new-depth-affected, @scopes);
-			@new-stack = $dumb-tmp[0];
-			$new-depth-affected = $dumb-tmp[1];
-			@tuple.push(@new-stack[*-1]);
-			@new-stack = init(@new-stack);
-			$new-depth-affected = depth-update($new-depth-affected, 1, 0);
-		}
-		append(@new-stack, Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @tuple), depth-update($new-depth-affected, 0, 1)
-	} }
+	method infix-tuple($match) {
+		$match.make: AST.new: type => Tuple-Node, val => (for $match<expr> { $_.made })
+	}
 	
 	method func-expr($match) {
 		$match.make: AST.new: type => Func-Expr-Node, val => $match<func>.made
@@ -306,6 +295,21 @@ sub run($ast, @scopes) {
 			
 			when Func-Expr-Node {
 				append(@stack, Val.new: type => Func-Val, val => $ast.val), depth-update($depth-affected, 0, 1)
+			}
+			
+			when Tuple-Node {
+				my @tuple = [];
+				my @new-stack = @stack;
+				my $new-depth-affected = $depth-affected;
+				for $ast.val -> $expr {
+					my $dumb-tmp = run($expr, @scopes)(@new-stack, $new-depth-affected);
+					@new-stack = $dumb-tmp[0];
+					$new-depth-affected = $dumb-tmp[1];
+					@tuple.push(@new-stack[*-1]);
+					@new-stack = init(@new-stack);
+					$new-depth-affected = depth-update($new-depth-affected, 1, 0);
+				}
+				append(@new-stack, Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @tuple), depth-update($new-depth-affected, 0, 1)
 			}
 		}
 	}
