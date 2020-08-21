@@ -285,7 +285,7 @@ sub run($ast, @scopes) {
 			}
 			
 			when Ident-Node {
-				my $intermediate = run(@stack[*-1].val, @scopes)(init(@stack), $depth-affected);
+				my $intermediate = @stack[*-1].val()(init(@stack), $depth-affected);
 				$intermediate[0], depth-update($intermediate[1], 1, 0)
 			}
 			
@@ -294,7 +294,7 @@ sub run($ast, @scopes) {
 			}
 			
 			when Func-Expr-Node {
-				append(@stack, Val.new: type => Func-Val, val => $ast.val), depth-update($depth-affected, 0, 1)
+				append(@stack, Val.new: type => Func-Val, val => run($ast.val, @scopes)), depth-update($depth-affected, 0, 1)
 			}
 			
 			when Tuple-Node {
