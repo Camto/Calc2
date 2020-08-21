@@ -1,5 +1,5 @@
 grammar Calc2 {
-	rule TOP { <func> }
+	rule TOP { <ws> <func> }
 	
 	rule func { <case>? ['|' <case>]* }
 	rule case { <patts>? <var-decls>? <expr> }
