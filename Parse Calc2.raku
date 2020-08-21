@@ -325,6 +325,7 @@ sub run($ast, @scopes) {
 				my $obj = @stack[*-1];
 				given $obj.type {
 					when Obj-Val {
+						die if $obj.val.tag ne $tag;
 						concat(init(@stack), $obj.val.vals.reverse), depth-update($depth-affected, 1, $obj.val.vals.elems)
 					}
 					default { say 'NOT IMPLEMENTED YET AAA'; @stack }
