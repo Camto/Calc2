@@ -223,6 +223,21 @@ class Calc2er {
 		)
 	}
 	
+	method op($match) {
+		$match.make: AST.new: type => Ident-Node, val => {
+			'+' => 'add', '~' => 'neg', '-' => 'sub', '*' => 'mul', '/' => 'div',
+			'^' => 'pow', '%' => 'mod', '%%' => 'divisible',
+			'=' => 'eq', '/=' => 'neq', '<' => 'lt', '>' => 'gt', '<=' => 'leq', '>=' => 'geq',
+			
+			'<<' => 'snoc', '>>' => 'cons', '<>' => 'concat',
+			
+			'$' => 'safe',
+			
+			'=?' => 'eq?', '/=?' => 'neq?', '<?' => 'lt?', '>?' => 'gt?', '<=?' => 'leq?', '>=?' => 'geq?',
+			'<<?' => 'snoc?', '>>?' => 'cons?'
+		}{$match.Str}
+	}
+	
 	method string($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
 		my @string = [];
 		my Bool $escaping = False;
