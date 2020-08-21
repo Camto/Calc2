@@ -87,10 +87,35 @@ class Obj-Data {
 	has @.vals;
 }
 
+enum Node-Type <
+	Func-Node Patt-Node
+	Obj-Make-Node Obj-Destr-Node Tuple-Node
+	Ident-Node Run-Func-Node
+	Complicated-Node Decimal-Node Integer-Node String-Node
+>;
+
+class AST {
+	has Node-Type $.type;
+	has $.val;
+}
+
+class Case-Data {
+	has @.patts;
+	has @.val-decls;
+	has @.expr;
+}
+
 class Calc2er {
 	method TOP($/) { make $<func>.made }
 	
-	method func($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+	method func($match) {
+		$match.make: AST.new: type => Func-Node, val => (for $match<case> {
+			Case-Data.new:
+				patts => $_<patts> ?? [] !! [],
+				var-decls => $_<var-decls> ?? [] !! [],
+				expr => $_<expr>.made
+		})
+		#`( $match.make: sub (@stack, $depth-affected, @scopes) {
 		my @new-stack = @stack;
 		my $new-depth-affected = $depth-affected;
 		my @new-scopes = @scopes;
@@ -113,7 +138,7 @@ class Calc2er {
 			}
 		}
 		die
-	} }
+	} ) }
 	
 	method patts($match) { $match.make: sub (@stack, @scopes) {
 		my %new-scope = {};
@@ -124,19 +149,18 @@ class Calc2er {
 		#
 	} }
 	
-	method expr($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
+	method expr($match) {
+		$match.make: (for $match<expr-unit> { $_.made })
+		#`( $match.make: sub (@stack, $depth-affected, @scopes) {
 		my @new-stack = @stack;
 		my $new-depth-affected = $depth-affected;
 		for $match<expr-unit> -> $expr-unit {
 			my $dumb-tmp = $expr-unit.made()(@new-stack, $new-depth-affected, @scopes);
-			say 'dump-tmp: ', $dumb-tmp;
 			@new-stack = $dumb-tmp[0];
-			say 'new-stack: ', $dumb-tmp[0];
-			say 'new-stack: ', @new-stack;
 			$new-depth-affected = $dumb-tmp[1];
 		}
 		@new-stack, $new-depth-affected
-	} }
+	} ) }
 	
 	method expr-unit($/) { make $/.values[0].made }
 	
@@ -148,9 +172,9 @@ class Calc2er {
 		append(@stack, Val.new: type => Decimal-Val, val => $match.Num), depth-update($depth-affected, 0, 1)
 	} }
 	
-	method integer($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
-		append(@stack, Val.new: type => Integer-Val, val => $match.Int), depth-update($depth-affected, 0, 1)
-	} }
+	method integer($match) {
+		$match.make: AST.new: type => Integer-Node, val => $match.Int
+	}
 	
 	method obj-destr($match) { $match.make: sub (@stack, $depth-affected, @scopes) {
 		my $tag = $match<obj>.Str;
@@ -241,5 +265,5 @@ my $prelude = "
 
 my $prelude = "";
 
-say Calc2.parse($prelude ~ get, actions => Calc2er).made()([], 0, []) while True;
+say Calc2.parse($prelude ~ get, actions => Calc2er).made while True;
 # say Calc2.parse: get while True;
