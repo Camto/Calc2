@@ -333,13 +333,16 @@ sub run($ast, @scopes) {
 				my @new-scopes = @scopes;
 				my @new-stack = @stack;
 				my @new-depth-affected = @depth-affected;
+				my @saved-vals = [];
 				for $ast.val -> $patt {
-					my $dumb-tmp = run($patt, @new-scopes)(@new-stack, @new-depth-affected);
+					my $dumb-tmp = run($patt, @new-scopes)(@new-stack, append(@new-depth-affected, 0));
 					@new-scopes = $dumb-tmp[0];
-					@new-stack = $dumb-tmp[1];
-					@new-depth-affected = $dumb-tmp[2];
+					my $save-num = $dumb-tmp[2][1];
+					@new-stack = $dumb-tmp[1].head: *-$save-num;
+					@saved-vals = concat(@saved-vals, $dumb-tmp[1].tail: $save-num);
+					@new-depth-affected = depth-update([$dumb-tmp[2][0]], $save-num, 0);
 				}
-				@new-scopes, @new-stack, @new-depth-affected
+				@new-scopes, concat(@new-stack, @saved-vals.reverse), depth-update(@new-depth-affected, 0, @saved-vals.elems)
 			}
 			
 			when Complicated-Node {
