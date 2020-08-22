@@ -345,8 +345,8 @@ sub run($ast, @scopes) {
 				my $new-depth-affected = $depth-affected;
 				for $ast.val -> $expr {
 					my $dumb-tmp = run($expr, @scopes)(@new-stack, $new-depth-affected);
-					@new-stack = $dumb-tmp[0];
-					$new-depth-affected = $dumb-tmp[1];
+					@new-stack = $dumb-tmp[1];
+					$new-depth-affected = $dumb-tmp[2];
 					@tuple.push(@new-stack[*-1]);
 					@new-stack = init(@new-stack);
 					$new-depth-affected = depth-update($new-depth-affected, 1, 0);
