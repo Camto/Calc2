@@ -76,7 +76,7 @@ enum Type <
 	Obj-Val
 	Complicated-Val Decimal-Val Integer-Val
 	String-Val
-	Func-Val
+	Func-Val Built-In-Val
 >;
 
 class Val {
@@ -217,11 +217,66 @@ class Calc2er {
 	method match($/) { make $<func>.made }
 }
 
+sub max-num-type(Type $t1, Type $t2) {
+	if $t1 == Complicated-Val || $t2 == Complicated-Val {
+		Complicated-Val
+	} elsif $t1 == Decimal-Val || $t2 == Decimal-Val {
+		Decimal-Val
+	} else {
+		Integer-Val
+	}
+}
+
+sub is-num-type(Type $t) { $t == Complicated-Val || $t == Decimal-Val || $t == Integer-Val }
+
+my %built-ins = {
+	add => sub (@stack, $depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-num-type($x.type) && is-num-type($y.type);
+		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val + $y.val)), depth-update($depth-affected, 2, 1)
+	},
+	
+	neg => sub (@stack, $depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => $x.type, val => -$x.val)), depth-update($depth-affected, 1, 1)
+	},
+	
+	sub => sub (@stack, $depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-num-type($x.type) && is-num-type($y.type);
+		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val - $y.val)), depth-update($depth-affected, 2, 1)
+	},
+	
+	mul => sub (@stack, $depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-num-type($x.type) && is-num-type($y.type);
+		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val * $y.val)), depth-update($depth-affected, 2, 1)
+	},
+
+	div => sub (@stack, $depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-num-type($x.type) && is-num-type($y.type);
+		die if $y.val == 0;
+		append(@stack.head(*-2), Val.new(type => max-num-type(Decimal-Val, max-num-type($x.type, $y.type)), val => $x.val / $y.val)), depth-update($depth-affected, 2, 1)
+	}
+}>>.map: { Val.new: type => Built-In-Val, val => $^fn };
+
 sub get-var(@scopes, $ident) {
 	for @scopes.reverse {
 		return $_{$ident} if $_{$ident}:exists
 	}
-	say 'BUILTINS HERE';
+	return %built-ins{$ident} if %built-ins{$ident}:exists;
+	die
 }
 
 sub run($ast, @scopes) {
