@@ -55,7 +55,7 @@ cat_maybes := {() {swap: Some?-> >> | _->} fold} ;
 map_maybe := {map cat_maybes} ;
 cat_maybes := {'id map_maybe} ;
 
-zip := {>>? a, >>? b-> zip (a, b) >> | _ _-> ()} ;
+zip := {>>? a, >>? b-> zip ('a, 'b) >> | _ _-> ()} ;
 
 comp := {b a-> {a b}} ;
 ```
