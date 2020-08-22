@@ -68,8 +68,8 @@ sub concat(@list1, @list2) {
 	(|@list1, |@list2).Array
 }
 
-sub depth-update($depth-affected, $popped, $pushed) {
-	max(0, $depth-affected - $popped) + $pushed
+sub depth-update(@depth-affected, $popped, $pushed) {
+	@depth-affected.map: { max(0, $^depth - $popped) + $pushed }
 }
 
 enum Type <
@@ -230,44 +230,44 @@ sub max-num-type(Type $t1, Type $t2) {
 sub is-num-type(Type $t) { $t == Complicated-Val || $t == Decimal-Val || $t == Integer-Val }
 
 my %built-ins = {
-	add => sub (@stack, $depth-affected) {
+	add => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
 		die if not is-num-type($x.type) && is-num-type($y.type);
-		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val + $y.val)), depth-update($depth-affected, 2, 1)
+		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val + $y.val)), depth-update(@depth-affected, 2, 1)
 	},
 	
-	neg => sub (@stack, $depth-affected) {
+	neg => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
 		my $x = @stack[*-1];
 		die if not is-num-type($x.type);
-		append(init(@stack), Val.new(type => $x.type, val => -$x.val)), depth-update($depth-affected, 1, 1)
+		append(init(@stack), Val.new(type => $x.type, val => -$x.val)), depth-update(@depth-affected, 1, 1)
 	},
 	
-	sub => sub (@stack, $depth-affected) {
+	sub => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
 		die if not is-num-type($x.type) && is-num-type($y.type);
-		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val - $y.val)), depth-update($depth-affected, 2, 1)
+		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val - $y.val)), depth-update(@depth-affected, 2, 1)
 	},
 	
-	mul => sub (@stack, $depth-affected) {
+	mul => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
 		die if not is-num-type($x.type) && is-num-type($y.type);
-		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val * $y.val)), depth-update($depth-affected, 2, 1)
+		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val * $y.val)), depth-update(@depth-affected, 2, 1)
 	},
 
-	div => sub (@stack, $depth-affected) {
+	div => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
 		die if not is-num-type($x.type) && is-num-type($y.type);
 		die if $y.val == 0;
-		append(@stack.head(*-2), Val.new(type => max-num-type(Decimal-Val, max-num-type($x.type, $y.type)), val => $x.val / $y.val)), depth-update($depth-affected, 2, 1)
+		append(@stack.head(*-2), Val.new(type => max-num-type(Decimal-Val, max-num-type($x.type, $y.type)), val => $x.val / $y.val)), depth-update(@depth-affected, 2, 1)
 	}
 }>>.map: { Val.new: type => Built-In-Val, val => $^fn };
 
@@ -280,31 +280,31 @@ sub get-var(@scopes, $ident) {
 }
 
 sub run($ast, @scopes) {
-	sub (@stack, $depth-affected) {
+	sub (@stack, @depth-affected) {
 		given $ast.type {
 			when Func-Node {
 				my @new-scopes = append(@scopes, {});
 				my @new-stack = @stack;
-				my $new-depth-affected = $depth-affected;
+				my @new-depth-affected = @depth-affected;
 				for $ast.val -> $case {
 					try {
-						my $dumb-tmp = run($case.patts, @new-scopes)(@new-stack, $new-depth-affected);
+						my $dumb-tmp = run($case.patts, @new-scopes)(@new-stack, @new-depth-affected);
 						@new-scopes = $dumb-tmp[0];
 						@new-stack = $dumb-tmp[1];
-						$new-depth-affected = $dumb-tmp[2];
+						@new-depth-affected = $dumb-tmp[2];
 					}
 					
 					if not $! {
 						if $case.var-decls {
-							my $dumb-tmp = run($case.var-decls, @new-scopes)(@new-stack, $new-depth-affected);
+							my $dumb-tmp = run($case.var-decls, @new-scopes)(@new-stack, @new-depth-affected);
 							@new-scopes = $dumb-tmp[0];
 							@new-stack = $dumb-tmp[1];
-							$new-depth-affected = $dumb-tmp[2];
+							@new-depth-affected = $dumb-tmp[2];
 						}
-						my $dumb-tmp = run($case.expr, @new-scopes)(@new-stack, $new-depth-affected);
+						my $dumb-tmp = run($case.expr, @new-scopes)(@new-stack, @new-depth-affected);
 						@new-stack = $dumb-tmp[1];
-						$new-depth-affected = $dumb-tmp[2];
-						return @new-stack, $new-depth-affected;
+						@new-depth-affected = $dumb-tmp[2];
+						return @new-stack, @new-depth-affected;
 					}
 				}
 				die
@@ -313,45 +313,45 @@ sub run($ast, @scopes) {
 			when Expr-Node {
 				my @new-scopes = @scopes;
 				my @new-stack = @stack;
-				my $new-depth-affected = $depth-affected;
+				my @new-depth-affected = @depth-affected;
 				for $ast.val -> $expr-unit {
 					if not $expr-unit.type == Bind-Node {
-						my $dumb-tmp = run($expr-unit, @scopes)(@new-stack, $new-depth-affected);
+						my $dumb-tmp = run($expr-unit, @scopes)(@new-stack, @new-depth-affected);
 						@new-stack = $dumb-tmp[0];
-						$new-depth-affected = $dumb-tmp[1];
+						@new-depth-affected = $dumb-tmp[1];
 					} else {
 						die if @new-stack.elems == 0;
 						@new-scopes[*-1]{$expr-unit.val} = @new-stack[*-1];
 						@new-stack = init(@new-stack);
-						$new-depth-affected = depth-update($new-depth-affected, 1, 0);
+						@new-depth-affected = depth-update(@new-depth-affected, 1, 0);
 					}
 				}
-				@new-scopes, @new-stack, $new-depth-affected
+				@new-scopes, @new-stack, @new-depth-affected
 			}
 			
 			when Patts-Node {
 				my @new-scopes = @scopes;
 				my @new-stack = @stack;
-				my $new-depth-affected = $depth-affected;
+				my @new-depth-affected = @depth-affected;
 				for $ast.val -> $patt {
-					my $dumb-tmp = run($patt, @new-scopes)(@new-stack, $new-depth-affected);
+					my $dumb-tmp = run($patt, @new-scopes)(@new-stack, @new-depth-affected);
 					@new-scopes = $dumb-tmp[0];
 					@new-stack = $dumb-tmp[1];
-					$new-depth-affected = $dumb-tmp[2];
+					@new-depth-affected = $dumb-tmp[2];
 				}
-				@new-scopes, @new-stack, $new-depth-affected
+				@new-scopes, @new-stack, @new-depth-affected
 			}
 			
 			when Complicated-Node {
-				append(@stack, Val.new: type => Complicated-Val, val => $ast.val), depth-update($depth-affected, 0, 1)
+				append(@stack, Val.new: type => Complicated-Val, val => $ast.val), depth-update(@depth-affected, 0, 1)
 			}
 			
 			when Decimal-Node {
-				append(@stack, Val.new: type => Decimal-Val, val => $ast.val), depth-update($depth-affected, 0, 1)
+				append(@stack, Val.new: type => Decimal-Val, val => $ast.val), depth-update(@depth-affected, 0, 1)
 			}
 			
 			when Integer-Node {
-				append(@stack, Val.new: type => Integer-Val, val => $ast.val), depth-update($depth-affected, 0, 1)
+				append(@stack, Val.new: type => Integer-Val, val => $ast.val), depth-update(@depth-affected, 0, 1)
 			}
 			
 			when Obj-Destr-Node {
@@ -361,7 +361,7 @@ sub run($ast, @scopes) {
 				given $obj.type {
 					when Obj-Val {
 						die if $obj.val.tag ne $tag;
-						concat(init(@stack), $obj.val.vals.reverse), depth-update($depth-affected, 1, $obj.val.vals.elems)
+						concat(init(@stack), $obj.val.vals.reverse), depth-update(@depth-affected, 1, $obj.val.vals.elems)
 					}
 					default { say 'NOT IMPLEMENTED YET AAA'; @stack }
 				}
@@ -375,38 +375,38 @@ sub run($ast, @scopes) {
 				append(
 					@stack.head(*-$obj-len),
 					Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag, vals => @stack.tail($obj-len).reverse
-				), depth-update($depth-affected, $obj-len, 1)
+				), depth-update(@depth-affected, $obj-len, 1)
 			}
 			
 			when Ident-Node {
-				get-var(@scopes, $ast.val).val()(@stack, $depth-affected)
+				get-var(@scopes, $ast.val).val()(@stack, @depth-affected)
 			}
 			
 			when String-Node {
-				append(@stack, Val.new: type => String-Val, val => $ast.val), depth-update($depth-affected, 0, 1)
+				append(@stack, Val.new: type => String-Val, val => $ast.val), depth-update(@depth-affected, 0, 1)
 			}
 			
 			when Quote-Var-Node {
-				append(@stack, get-var(@scopes, $ast.val.val)), depth-update($depth-affected, 0, 1)
+				append(@stack, get-var(@scopes, $ast.val.val)), depth-update(@depth-affected, 0, 1)
 			}
 			
 			when Func-Expr-Node {
-				append(@stack, Val.new: type => Func-Val, val => run($ast.val, @scopes)), depth-update($depth-affected, 0, 1)
+				append(@stack, Val.new: type => Func-Val, val => run($ast.val, @scopes)), depth-update(@depth-affected, 0, 1)
 			}
 			
 			when Tuple-Node {
 				my @tuple = [];
 				my @new-stack = @stack;
-				my $new-depth-affected = $depth-affected;
+				my @new-depth-affected = @depth-affected;
 				for $ast.val -> $expr {
-					my $dumb-tmp = run($expr, @scopes)(@new-stack, $new-depth-affected);
+					my $dumb-tmp = run($expr, @scopes)(@new-stack, @new-depth-affected);
 					@new-stack = $dumb-tmp[1];
-					$new-depth-affected = $dumb-tmp[2];
+					@new-depth-affected = $dumb-tmp[2];
 					@tuple.push(@new-stack[*-1]);
 					@new-stack = init(@new-stack);
-					$new-depth-affected = depth-update($new-depth-affected, 1, 0);
+					@new-depth-affected = depth-update(@new-depth-affected, 1, 0);
 				}
-				append(@new-stack, Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @tuple), depth-update($new-depth-affected, 0, 1)
+				append(@new-stack, Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @tuple), depth-update(@new-depth-affected, 0, 1)
 			}
 		}
 	}
@@ -430,6 +430,6 @@ my $prelude = "
 	\{} id
 ";
 
-say run(Calc2.parse($prelude ~ get, actions => Calc2er).made, [])([], 0) while True;
+say run(Calc2.parse($prelude ~ get, actions => Calc2er).made, [])([], [0]) while True;
 # say Calc2.parse($prelude ~ get, actions => Calc2er).made while True;
 # say Calc2.parse: $prelude ~ get while True;
