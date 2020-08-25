@@ -325,7 +325,7 @@ sub run($ast, @scopes) {
 						@new-scopes = $dumb-tmp[0];
 						@new-stack = $dumb-tmp[1];
 						@new-depth-affected = $dumb-tmp[2];
-						my $dumb-tmp = run($case.expr, @new-scopes)(@new-stack, @new-depth-affected);
+						$dumb-tmp = run($case.expr, @new-scopes)(@new-stack, @new-depth-affected);
 						@new-stack = $dumb-tmp[1];
 						@new-depth-affected = $dumb-tmp[2];
 						return @new-stack, @new-depth-affected;
@@ -389,7 +389,7 @@ sub run($ast, @scopes) {
 				my $dumb-tmp = run($ast.val.expr, @new-scopes)(@new-stack, @new-depth-affected);
 				@new-stack = $dumb-tmp[1];
 				@new-depth-affected = $dumb-tmp[2];
-				my $dumb-tmp = run($ast.val.name, @new-scopes)(@new-stack, @new-depth-affected);
+				$dumb-tmp = run($ast.val.name, @new-scopes)(@new-stack, @new-depth-affected);
 				@new-scopes = $dumb-tmp[0];
 				@new-stack = $dumb-tmp[1];
 				@new-depth-affected = $dumb-tmp[2];
