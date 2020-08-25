@@ -49,7 +49,7 @@ grammar Calc2 {
 	rule var-decls { <decl>+ }
 	rule decl { <var-decl> || <pipe-decl> }
 	rule var-decl { <patt> ':=' <expr> ';' }
-	rule pipe-decl { <ident> '|=' <expr> ';' }
+	rule pipe-decl { <ident> '|=' <func-expr> ';' }
 	
 	rule patt { <patt-unit>* }
 	rule patt-unit { <patt-bind> || <patt-ident> || <expr-unit> }
@@ -91,7 +91,7 @@ class Obj-Data {
 }
 
 enum Node-Type <
-	Func-Node Expr-Node Patts-Node Var-Decls-Node Var-Decl-Node Pipe-Decl-Node
+	Func-Node Expr-Node Patts-Node Var-Decls-Node Var-Decl-Node Pipe-Decl-Node Run-It-Node
 	Obj-Make-Node Obj-Destr-Node Tuple-Node
 	Ident-Node Quote-Var-Node Bind-Node Func-Expr-Node
 	Complicated-Node Decimal-Node Integer-Node String-Node
@@ -115,7 +115,7 @@ class Obj-Make-Data {
 
 class Decl-Data {
 	has $.name;
-	has $.expr;
+	has $.def;
 }
 
 class Calc2er {
@@ -154,14 +154,14 @@ class Calc2er {
 		$match.make: AST.new: type => Var-Decl-Node, val =>
 			Decl-Data.new:
 				name => $match<patt>.made,
-				expr => $match<expr>.made
+				def => $match<expr>.made
 	}
 	
 	method pipe-decl($match) {
 		$match.make: AST.new: type => Pipe-Decl-Node, val =>
 			Decl-Data.new:
 				name => $match<ident>.Str.trim,
-				expr => $match<expr>.made
+				def => $match<func-expr>.made.val
 	}
 	
 	method expr($match) {
@@ -308,6 +308,17 @@ sub get-var(@scopes, $ident) {
 sub run($ast, @scopes) {
 	sub (@stack, @depth-affected) {
 		given $ast.type {
+			when Run-It-Node {
+				my @new-scopes = @scopes;
+				my @new-stack = @stack;
+				my @new-depth-affected = @depth-affected;
+				my $dumb-tmp = $ast.val()(@new-stack, @new-depth-affected);
+				@new-scopes = $dumb-tmp[0];
+				@new-stack = $dumb-tmp[1];
+				@new-depth-affected = $dumb-tmp[2];
+				@new-scopes, @new-stack, @new-depth-affected
+			}
+			
 			when Func-Node {
 				my @new-scopes = append(@scopes, {});
 				my @new-stack = @stack;
@@ -386,7 +397,7 @@ sub run($ast, @scopes) {
 				my @new-scopes = @scopes;
 				my @new-stack = @stack;
 				my @new-depth-affected = @depth-affected;
-				my $dumb-tmp = run($ast.val.expr, @new-scopes)(@new-stack, @new-depth-affected);
+				my $dumb-tmp = run($ast.val.def, @new-scopes)(@new-stack, @new-depth-affected);
 				@new-stack = $dumb-tmp[1];
 				@new-depth-affected = $dumb-tmp[2];
 				$dumb-tmp = run($ast.val.name, @new-scopes)(@new-stack, @new-depth-affected);
@@ -394,6 +405,15 @@ sub run($ast, @scopes) {
 				@new-stack = $dumb-tmp[1];
 				@new-depth-affected = $dumb-tmp[2];
 				@new-scopes, @new-stack, @new-depth-affected
+			}
+			
+			when Pipe-Decl-Node {
+				my @new-scopes = @scopes;
+				@new-scopes[*-1]{$ast.val.name} = Val.new: type => Func-Val, val => run(AST.new(type => Func-Node, val => append($ast.val.def.val, Case-Data.new:
+					patts => AST.new(type => Patts-Node, val => []),
+					var-decls => AST.new(type => Var-Decls-Node, val => []),
+					expr => AST.new(type => Expr-Node, val => [AST.new: type => Run-It-Node, val => @new-scopes[*-1]{$ast.val.name}.val]))), @new-scopes);
+				@new-scopes, @stack, @depth-affected
 			}
 			
 			when Complicated-Node {
@@ -472,6 +492,10 @@ my $prelude = "
 	do := \{fn-> fn} ;
 	swap := \{a b-> 'a 'b} ;
 	id := \{} ;
+	
+	map := \{_->} ;
+	map |= \{f Some?-> f `Some} ;
+	map |= \{f Right?-> f `Right} ;
 ";
 
 say run(Calc2.parse($prelude ~ get, actions => Calc2er).made, [])([], [0]) while True;
