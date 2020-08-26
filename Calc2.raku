@@ -255,6 +255,8 @@ sub max-num-type(Type $t1, Type $t2) {
 
 sub is-num-type(Type $t) { $t == Complicated-Val || $t == Decimal-Val || $t == Integer-Val }
 
+sub bool-to-val(Bool $b) { Val.new(type => Obj-Val, val => Obj-Data.new: tag => $b ?? 'True' !! 'False', vals => []) }
+
 my %built-ins = {
 	add => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
