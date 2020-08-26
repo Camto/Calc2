@@ -303,7 +303,6 @@ my %built-ins = {
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
 		die if not is-num-type($x.type) && is-num-type($y.type);
-		die if $y.val == 0;
 		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val ** $y.val)), depth-update(@depth-affected, 2, 1)
 	},
 	
