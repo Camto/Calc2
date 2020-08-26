@@ -304,7 +304,7 @@ my %built-ins = {
 		my $x = @stack[*-2];
 		die if not is-num-type($x.type) && is-num-type($y.type);
 		die if $y.val == 0;
-		append(@stack.head(*-2), Val.new(type => max-num-type(Decimal-Val, max-num-type($x.type, $y.type)), val => $x.val ** $y.val)), depth-update(@depth-affected, 2, 1)
+		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val ** $y.val)), depth-update(@depth-affected, 2, 1)
 	},
 	
 	mod => sub (@stack, @depth-affected) {
@@ -313,7 +313,7 @@ my %built-ins = {
 		my $x = @stack[*-2];
 		die if not is-num-type($x.type) && is-num-type($y.type);
 		die if $y.val == 0;
-		append(@stack.head(*-2), Val.new(type => max-num-type(Decimal-Val, max-num-type($x.type, $y.type)), val => $x.val % $y.val)), depth-update(@depth-affected, 2, 1)
+		append(@stack.head(*-2), Val.new(type => max-num-type($x.type, $y.type), val => $x.val % $y.val)), depth-update(@depth-affected, 2, 1)
 	},
 	
 	divtst => sub (@stack, @depth-affected) {
