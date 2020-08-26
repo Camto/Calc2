@@ -21,7 +21,7 @@ grammar Calc2 {
 		|| <func-expr>
 		|| <match>
 	}
-	token complicated { [\d+ ['.' \d+]? '+']? \d+ ['.' \d+]? 'i' }
+	token complicated { [\d+ ['.' \d+]? ['+' || '-']]? \d+ ['.' \d+]? 'i' }
 	token decimal { \d+ '.' \d+ }
 	token integer { \d+ }
 	token obj-destr { <obj> '?' }
