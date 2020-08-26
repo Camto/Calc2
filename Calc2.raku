@@ -198,13 +198,13 @@ class Calc2er {
 		$match.make: AST.new: type => Ident-Node, val => {
 			'+' => 'add', '~' => 'neg', '-' => 'sub', '*' => 'mul', '/' => 'div',
 			'^' => 'pow', '%' => 'mod', '%%' => 'divtst',
-			'=' => 'eq', '/=' => 'neq', '<' => 'lt', '>' => 'gt', '<=' => 'leq', '>=' => 'geq',
+			'=' => 'eq', '/=' => 'neq', '<' => 'lt', '>' => 'gt', '<=' => 'lte', '>=' => 'gte',
 			
 			'<<' => 'snoc', '>>' => 'cons', '<>' => 'concat',
 			
 			'&' => 'safe',
 			
-			'=?' => 'eq?', '/=?' => 'neq?', '<?' => 'lt?', '>?' => 'gt?', '<=?' => 'leq?', '>=?' => 'geq?',
+			'=?' => 'eq?', '/=?' => 'neq?', '<?' => 'lt?', '>?' => 'gt?', '<=?' => 'lte?', '>=?' => 'gte?',
 			'<<?' => 'snoc?', '>>?' => 'cons?'
 		}{$match.Str}
 	}
@@ -254,6 +254,8 @@ sub max-num-type(Type $t1, Type $t2) {
 }
 
 sub is-num-type(Type $t) { $t == Complicated-Val || $t == Decimal-Val || $t == Integer-Val }
+
+sub is-real-type(Type $t) { $t == Decimal-Val || $t == Integer-Val }
 
 sub bool-to-val(Bool $b) { Val.new(type => Obj-Val, val => Obj-Data.new: tag => $b ?? 'True' !! 'False', vals => []) }
 
@@ -367,6 +369,38 @@ my %built-ins = {
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
 		append(@stack.head(*-2), bool-to-val(not val-eq($x, $y))), depth-update(@depth-affected, 2, 1)
+	},
+	
+	lt => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-real-type($x.type) && is-real-type($y.type);
+		append(@stack.head(*-2), bool-to-val($x.val < $y.val)), depth-update(@depth-affected, 2, 1)
+	},
+	
+	gt => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-real-type($x.type) && is-real-type($y.type);
+		append(@stack.head(*-2), bool-to-val($x.val > $y.val)), depth-update(@depth-affected, 2, 1)
+	},
+	
+	lte => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-real-type($x.type) && is-real-type($y.type);
+		append(@stack.head(*-2), bool-to-val($x.val <= $y.val)), depth-update(@depth-affected, 2, 1)
+	},
+	
+	gte => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-real-type($x.type) && is-real-type($y.type);
+		append(@stack.head(*-2), bool-to-val($x.val >= $y.val)), depth-update(@depth-affected, 2, 1)
 	},
 }>>.map: { Val.new: type => Built-In-Val, val => $^fn };
 
