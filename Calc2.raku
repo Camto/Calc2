@@ -197,7 +197,7 @@ class Calc2er {
 	method op($match) {
 		$match.make: AST.new: type => Ident-Node, val => {
 			'+' => 'add', '~' => 'neg', '-' => 'sub', '*' => 'mul', '/' => 'div',
-			'^' => 'pow', '%' => 'mod', '%%' => 'divisible',
+			'^' => 'pow', '%' => 'mod', '%%' => 'divtst',
 			'=' => 'eq', '/=' => 'neq', '<' => 'lt', '>' => 'gt', '<=' => 'leq', '>=' => 'geq',
 			
 			'<<' => 'snoc', '>>' => 'cons', '<>' => 'concat',
