@@ -257,6 +257,37 @@ sub is-num-type(Type $t) { $t == Complicated-Val || $t == Decimal-Val || $t == I
 
 sub bool-to-val(Bool $b) { Val.new(type => Obj-Val, val => Obj-Data.new: tag => $b ?? 'True' !! 'False', vals => []) }
 
+sub val-eq(Val $x, Val $y) {
+	return False if $x.type != $y.type && not (is-num-type($x.type) && is-num-type($y.type));
+	given $x.type {
+		when Obj-Val {
+			return False if $x.val.tag ne $y.val.tag || $x.val.vals.elems != $y.val.vals.elems;
+			for $x.val.vals Z $y.val.vals {
+				return False if not val-eq($_[0], $_[1]);
+			}
+			True
+		}
+		
+		when Complicated-Val {
+			$x.val == $y.val
+		}
+		when Decimal-Val {
+			$x.val == $y.val
+		}
+		when Integer-Val {
+			$x.val == $y.val
+		}
+		
+		when String-Val {
+			$x.val eq $y.val
+		}
+		
+		default {
+			False
+		}
+	}
+}
+
 my %built-ins = {
 	add => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
@@ -322,7 +353,21 @@ my %built-ins = {
 		die if not is-num-type($x.type) && is-num-type($y.type);
 		die if $y.val == 0;
 		append(@stack.head(*-2), bool-to-val($x.val %% $y.val)), depth-update(@depth-affected, 2, 1)
-	}
+	},
+	
+	eq => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		append(@stack.head(*-2), bool-to-val(val-eq($x, $y))), depth-update(@depth-affected, 2, 1)
+	},
+	
+	neq => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		append(@stack.head(*-2), bool-to-val(not val-eq($x, $y))), depth-update(@depth-affected, 2, 1)
+	},
 }>>.map: { Val.new: type => Built-In-Val, val => $^fn };
 
 sub get-var(@scopes, $ident) {
