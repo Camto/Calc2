@@ -77,7 +77,7 @@ enum Type <
 	Obj-Val
 	Complicated-Val Decimal-Val Integer-Val
 	String-Val
-	Func-Val Built-In-Val
+	Func-Val
 >;
 
 class Val {
@@ -454,7 +454,7 @@ my %built-ins = {
 		die if not $x.val >= $y.val;
 		init(@stack), depth-update(@depth-affected, 2, 1)
 	},
-}>>.map: { Val.new: type => Built-In-Val, val => $^fn };
+}>>.map: { Val.new: type => Func-Val, val => $^fn };
 
 sub get-var(@scopes, $ident) {
 	for @scopes.reverse {
