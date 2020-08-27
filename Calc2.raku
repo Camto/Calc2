@@ -402,6 +402,58 @@ my %built-ins = {
 		die if not is-real-type($x.type) && is-real-type($y.type);
 		append(@stack.head(*-2), bool-to-val($x.val >= $y.val)), depth-update(@depth-affected, 2, 1)
 	},
+	
+	'eq?' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not val-eq($x, $y);
+		@stack.head(*-2), depth-update(@depth-affected, 2, 0)
+	},
+	
+	'neq?' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if val-eq($x, $y);
+		init(@stack), depth-update(@depth-affected, 2, 1)
+	},
+	
+	'lt?' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-real-type($x.type) && is-real-type($y.type);
+		die if not $x.val < $y.val;
+		init(@stack), depth-update(@depth-affected, 2, 1)
+	},
+	
+	'gt?' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-real-type($x.type) && is-real-type($y.type);
+		die if not $x.val > $y.val;
+		init(@stack), depth-update(@depth-affected, 2, 1)
+	},
+	
+	'lte?' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-real-type($x.type) && is-real-type($y.type);
+		die if not $x.val <= $y.val;
+		init(@stack), depth-update(@depth-affected, 2, 1)
+	},
+	
+	'gte?' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-real-type($x.type) && is-real-type($y.type);
+		die if not $x.val >= $y.val;
+		init(@stack), depth-update(@depth-affected, 2, 1)
+	},
 }>>.map: { Val.new: type => Built-In-Val, val => $^fn };
 
 sub get-var(@scopes, $ident) {
@@ -594,11 +646,14 @@ sub run($ast, @scopes) {
 }
 
 my $prelude = "
+	do := \{fn-> fn} ;
+	id := \{} ;
+	
 	dup := \{a-> 'a 'a} ;
 	drop := \{_->} ;
-	do := \{fn-> fn} ;
 	swap := \{a b-> 'a 'b} ;
-	id := \{} ;
+	rot := \{a b c-> 'a 'c 'b} ;
+	unrot := \{a b c-> 'b 'a 'c} ;
 	
 	map := \{_->} ;
 	map |= \{f Some?-> f `Some} ;
