@@ -611,6 +611,7 @@ sub run($ast, @scopes) {
 						my $y = @stack[*-1];
 						my $x = @stack[*-2];
 						die if not is-real-type($x.type) && is-real-type($y.type);
+						CATCH { default { say 'Special object Comp can only take two items, which can be decimals or integers, for the real and imaginary components.'; die } }
 						append(@stack.head(*-2), Val.new: type => Complicated-Val, val => $x.val + $y.val * i), depth-update(@depth-affected, 2, 1)
 					}
 					
@@ -626,13 +627,19 @@ sub run($ast, @scopes) {
 						die if $l.type != Obj-Val;
 						die if [||] $l.val.vals.map: { $_.type != Integer-Val };
 						die if [||] $l.val.vals.map: { $_.val < 0 || $_.val > 9 };
+						CATCH { default { say 'Special object Int can only take one item, and that is a list of digits.'; die } }
 						append(init(@stack), Val.new: type => Integer-Val, val => $l.val.vals.map(*.val).join.Int), depth-update(@depth-affected, 1, 1);
 					}
 					
 					when 'Str' {
 						my @l = @stack.tail($obj-len).reverse;
 						die if [||] @l.map: { $_.type != Integer-Val };
+						CATCH { default { say 'Special object Str can only integers, which get turned into their unicode point.'; die } }
 						append(@stack.head(*-$obj-len), Val.new: type => String-Val, val => @l.map(*.val).chrs), depth-update(@depth-affected, $obj-len, 1)
+					}
+					
+					when 'Func' {
+						say "Can\'t make Func objects sorry."; die
 					}
 					
 					default {
