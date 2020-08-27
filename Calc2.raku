@@ -615,11 +615,15 @@ sub run($ast, @scopes) {
 						append(@stack.head(*-2), Val.new: type => Complicated-Val, val => $x.val + $y.val * i), depth-update(@depth-affected, 2, 1)
 					}
 					
-					#`(
 					when 'Dec' {
 						die if $obj-len != 2;
+						my $y = @stack[*-1];
+						my $x = @stack[*-2];
+						die if $x.type != Integer-Val;
+						die if $y.type != Decimal-Val || $y.val < 0 || $y.val >= 1;
+						CATCH { default { say 'Special object Dec can only take two items, an integer and a decimal.'; die } }
+						append(@stack.head(*-2), Val.new: type => Decimal-Val, val => $x.val + $y.val), depth-update(@depth-affected, 2, 1)
 					}
-					)
 					
 					when 'Int' {
 						die if $obj-len != 1;
