@@ -605,10 +605,43 @@ sub run($ast, @scopes) {
 				$tag = 'Tup' if $tag eq '()';
 				my $obj-len = $ast.val.len;
 				die if @stack.elems < $obj-len;
-				append(
-					@stack.head(*-$obj-len),
-					Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag, vals => @stack.tail($obj-len).reverse
-				), depth-update(@depth-affected, $obj-len, 1)
+				given $tag {
+					when 'Comp' {
+						die if $obj-len != 2;
+						my $y = @stack[*-1];
+						my $x = @stack[*-2];
+						die if not is-real-type($x.type) && is-real-type($y.type);
+						append(@stack.head(*-2), Val.new: type => Complicated-Val, val => $x.val + $y.val * i), depth-update(@depth-affected, 2, 1)
+					}
+					
+					#`(
+					when 'Dec' {
+						die if $obj-len != 2;
+					}
+					)
+					
+					when 'Int' {
+						die if $obj-len != 1;
+						my $l = @stack[*-1];
+						die if $l.type != Obj-Val;
+						die if [||] $l.val.vals.map: { $_.type != Integer-Val };
+						die if [||] $l.val.vals.map: { $_.val < 0 || $_.val > 9 };
+						append(init(@stack), Val.new: type => Integer-Val, val => $l.val.vals.map(*.val).join.Int), depth-update(@depth-affected, 1, 1);
+					}
+					
+					#`(
+					when String-Val {
+						
+					}
+					)
+					
+					default {
+						append(
+							@stack.head(*-$obj-len),
+							Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag, vals => @stack.tail($obj-len).reverse
+						), depth-update(@depth-affected, $obj-len, 1)
+					}
+				}
 			}
 			
 			when Ident-Node {
