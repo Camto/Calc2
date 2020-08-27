@@ -629,11 +629,11 @@ sub run($ast, @scopes) {
 						append(init(@stack), Val.new: type => Integer-Val, val => $l.val.vals.map(*.val).join.Int), depth-update(@depth-affected, 1, 1);
 					}
 					
-					#`(
-					when String-Val {
-						
+					when 'Str' {
+						my @l = @stack.tail($obj-len).reverse;
+						die if [||] @l.map: { $_.type != Integer-Val };
+						append(@stack.head(*-$obj-len), Val.new: type => String-Val, val => @l.map(*.val).chrs), depth-update(@depth-affected, $obj-len, 1)
 					}
-					)
 					
 					default {
 						append(
