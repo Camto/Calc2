@@ -651,7 +651,7 @@ sub run($ast, @scopes) {
 						die if $obj.val.tag ne $tag;
 						concat(init(@stack), $obj.val.vals.reverse), depth-update(@depth-affected, 1, $obj.val.vals.elems)
 					}
-					default { say 'NOT IMPLEMENTED YET AAA'; @stack }
+					default { say 'NOT IMPLEMENTED YET AAA'; say $obj ; @stack, depth-update(@depth-affected, 1, 1) }
 				}
 			}
 			
