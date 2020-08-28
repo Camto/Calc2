@@ -423,6 +423,15 @@ my %built-ins = {
 		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => append($x.val.vals, $y)), depth-update(@depth-affected, 2, 1)
 	},
 	
+	cat => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if $x.type != Obj-Val || $x.val.tag ne 'Tup';
+		die if $y.type != Obj-Val || $y.val.tag ne 'Tup';
+		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => concat($x.val.vals, $y.val.vals)), depth-update(@depth-affected, 2, 1)
+	},
+	
 	'eq?' => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
 		my $y = @stack[*-1];
