@@ -702,6 +702,8 @@ my $prelude = "
 	map := \{_->} ;
 	map |= \{f Some?-> f `Some} ;
 	map |= \{f Right?-> f `Right} ;
+	
+	fib := {2<? -> | dup 1 - fib swap 2 - fib +} ;
 ";
 
 say run(Calc2.parse($prelude ~ get, actions => Calc2er).made, [])([], [0]) while True;
