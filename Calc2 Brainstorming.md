@@ -25,8 +25,8 @@ lefts := {{Left? -> `Some | Right? -> drop None} map_maybe} ;
 either_map := {f Right?-> f `Right | _->} ;
 
 partition_eithers := {
-	left := {l ()?-> (l>>,)} ;
-	right := {r ()?-> (,r>>)} ;
+	left := {'l ()?-> (l>>,)} ;
+	right := {'r ()?-> (,r>>)} ;
 	((),()) {'right 'left either} foldr} ;
 
 add_vectors := {()? x1 y1 ()? x2 y2 -> (x1 x2 +, y1 y2 +)} ;
@@ -46,7 +46,7 @@ cons? := {dup head? swap tail? and} ;
 head? := {()? h @drop -> h `Match | -> No_Match} ;
 tail? := {()=? -> No_Match | -> tail `Match} ;
 
-foldr := {k z-> go := {>>?-> 'go dip k | _-> z} ; go} ;
+foldr := {k z-> go := {>>?-> 'go dip k | _-> 'z} ; go} ;
 
 map_maybe := {f >>? x-> 'f map_maybe ['x f]: Some?-> >> | _->} ;
 map_maybe := {f-> () {swap f: Some?-> >> | _->} fold} ;
