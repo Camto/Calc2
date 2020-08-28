@@ -35,7 +35,7 @@ grammar Calc2 {
 		
 		| '<<' | '>>' | '<>'
 		
-		| '$'
+		| '&'
 		
 		| '=?' | '/=?' | '<?' | '>?' | '<=?' | '>=?'
 		| '<<?' | '>>?'
@@ -430,6 +430,18 @@ my %built-ins = {
 		die if $x.type != Obj-Val || $x.val.tag ne 'Tup';
 		die if $y.type != Obj-Val || $y.val.tag ne 'Tup';
 		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => concat($x.val.vals, $y.val.vals)), depth-update(@depth-affected, 2, 1)
+	},
+	
+	safe => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if $x.type != Func-Val;
+		my @safe-res = [];
+		try {
+			my $dumb-tmp = $x.val()(init(@stack), [0]);
+			@safe-res = $dumb-tmp[0].tail($dumb-tmp[1][0]);
+		}
+		append(init(@stack), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @safe-res), depth-update(@depth-affected, 1, 1)
 	},
 	
 	'eq?' => sub (@stack, @depth-affected) {
