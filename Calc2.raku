@@ -61,6 +61,10 @@ sub append(@list, $elem) {
 	(|@list, $elem).Array
 }
 
+sub prepend(@list, $elem) {
+	($elem, |@list).Array
+}
+
 sub init(@list) {
 	@list.head: *-1
 }
