@@ -760,7 +760,18 @@ my $prelude = "
 	map |= \{f Right?-> f `Right} ;
 	map |= \{f <<?-> f \{'f map} dip <<} ;
 	
+	foldr := \{k z-> go := \{>>?-> 'go dip k | _-> 'z} ; go} ;
+	
+	cat_maybes := \{() \{Some?-> >> | _->} foldr} ;
+	map_maybe := \{map cat_maybes} ;
+	
 	either := \{f _ Left? -> f | _ g Right? -> g} ;
+	lefts := \{\{Left? -> `Some | Right? _ -> None} map_maybe} ;
+	rights := \{\{Right? -> `Some | Left? _ -> None} map_maybe} ;
+	partition_eithers := \{
+		left := \{l ()?-> ('l>>,)} ;
+		right := \{r ()?-> (,'r>>)} ;
+		((),()) \{'right 'left either} foldr} ;
 	
 	fib := \{2<? -> | dup 1 - fib swap 2 - fib +} ;
 ";
