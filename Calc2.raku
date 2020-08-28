@@ -412,7 +412,7 @@ my %built-ins = {
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
 		die if $x.type != Obj-Val || $x.val.tag ne 'Tup';
-		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => prepend($x.val.vals, $y)), depth-update(@depth-affected, 2, 1)
+		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => append($x.val.vals, $y)), depth-update(@depth-affected, 2, 1)
 	},
 
 	cons => sub (@stack, @depth-affected) {
@@ -420,7 +420,7 @@ my %built-ins = {
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
 		die if $x.type != Obj-Val || $x.val.tag ne 'Tup';
-		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => append($x.val.vals, $y)), depth-update(@depth-affected, 2, 1)
+		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => prepend($x.val.vals, $y)), depth-update(@depth-affected, 2, 1)
 	},
 	
 	cat => sub (@stack, @depth-affected) {
@@ -495,6 +495,20 @@ my %built-ins = {
 		die if not $x.val >= $y.val;
 		init(@stack), depth-update(@depth-affected, 2, 1)
 	},
+	
+	'snoc?' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $l = @stack[*-1];
+		die if $l.type != Obj-Val || $l.val.tag ne 'Tup' || $l.val.vals.elems < 1;
+		concat(init(@stack), [Val.new(type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => init($l.val.vals)), $l.val.vals[*-1]]), depth-update(@depth-affected, 1, 2)
+	},
+	
+	'cons?' =>  sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $l = @stack[*-1];
+		die if $l.type != Obj-Val || $l.val.tag ne 'Tup' || $l.val.vals.elems < 1;
+		concat(init(@stack), [Val.new(type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => $l.val.vals.tail(*-1)), $l.val.vals[0]]), depth-update(@depth-affected, 1, 2)
+	}
 }>>.map: { Val.new: type => Func-Val, val => $^fn };
 
 sub get-var(@scopes, $ident) {
@@ -574,10 +588,10 @@ sub run($ast, @scopes) {
 					@new-scopes = $dumb-tmp[0];
 					my $save-num = $dumb-tmp[2][1];
 					@new-stack = $dumb-tmp[1].head: *-$save-num;
-					@saved-vals = concat(@saved-vals, $dumb-tmp[1].tail: $save-num);
+					@saved-vals = concat($dumb-tmp[1].tail($save-num), @saved-vals);
 					@new-depth-affected = depth-update([$dumb-tmp[2][0]], $save-num, 0);
 				}
-				@new-scopes, concat(@new-stack, @saved-vals.reverse), depth-update(@new-depth-affected, 0, @saved-vals.elems)
+				@new-scopes, concat(@new-stack, @saved-vals), depth-update(@new-depth-affected, 0, @saved-vals.elems)
 			}
 			
 			when Var-Decls-Node {
@@ -739,12 +753,16 @@ my $prelude = "
 	swap := \{a b-> 'a 'b} ;
 	rot := \{a b c-> 'a 'c 'b} ;
 	unrot := \{a b c-> 'b 'a 'c} ;
+	dip := \{f-> swap f swap} ;
 	
 	map := \{_->} ;
 	map |= \{f Some?-> f `Some} ;
 	map |= \{f Right?-> f `Right} ;
+	map |= \{f <<?-> f \{'f map} dip <<} ;
 	
-	fib := {2<? -> | dup 1 - fib swap 2 - fib +} ;
+	either := \{f _ Left? -> f | _ g Right? -> g} ;
+	
+	fib := \{2<? -> | dup 1 - fib swap 2 - fib +} ;
 ";
 
 say run(Calc2.parse($prelude ~ get, actions => Calc2er).made, [])([], [0]) while True;
