@@ -523,21 +523,21 @@ my %built-ins = {
 		concat(init(@stack), $obj.val.vals.reverse), depth-update(@depth-affected, 1, $obj.val.vals.elems)
 	},
 	
-	'tag' => sub (@stack, @depth-affected) {
+	tag => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
 		my $obj = @stack[*-1];
 		die if $obj.type != Obj-Val;
 		append(init(@stack), Val.new: type => String-Val, val => $obj.val.tag), depth-update(@depth-affected, 1, 1)
 	},
 	
-	'len' => sub (@stack, @depth-affected) {
+	len => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
 		my $obj = @stack[*-1];
 		die if $obj.type != Obj-Val;
 		append(init(@stack), Val.new: type => Integer-Val, val => $obj.val.vals.elems), depth-update(@depth-affected, 1, 1)
 	},
 	
-	'make_obj' => sub (@stack, @depth-affected) {
+	make_obj => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
 		my $tag = @stack[*-1];
 		my $len = @stack[*-2];
