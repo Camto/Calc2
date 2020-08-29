@@ -623,10 +623,10 @@ sub run($ast, @scopes) {
 				for $ast.val -> $patt {
 					my $dumb-tmp = run($patt, @new-scopes)(@new-stack, append(@new-depth-affected, 0));
 					@new-scopes = $dumb-tmp[0];
-					my $save-num = $dumb-tmp[2][1];
+					my $save-num = $dumb-tmp[2].tail;
 					@new-stack = $dumb-tmp[1].head: *-$save-num;
 					@saved-vals = concat($dumb-tmp[1].tail($save-num), @saved-vals);
-					@new-depth-affected = depth-update([$dumb-tmp[2][0]], $save-num, 0);
+					@new-depth-affected = depth-update(init($dumb-tmp[2]), $save-num, 0);
 				}
 				@new-scopes, concat(@new-stack, @saved-vals), depth-update(@new-depth-affected, 0, @saved-vals.elems)
 			}
