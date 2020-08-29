@@ -411,25 +411,26 @@ my %built-ins = {
 		die if @stack.elems < 2;
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
-		die if $x.type != Obj-Val || $x.val.tag ne 'Tup';
-		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => append($x.val.vals, $y)), depth-update(@depth-affected, 2, 1)
+		die if $x.type != Obj-Val;
+		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => $x.val.tag, vals => append($x.val.vals, $y)), depth-update(@depth-affected, 2, 1)
 	},
 
 	cons => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
-		die if $x.type != Obj-Val || $x.val.tag ne 'Tup';
-		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => prepend($x.val.vals, $y)), depth-update(@depth-affected, 2, 1)
+		die if $x.type != Obj-Val;
+		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => $x.val.tag, vals => prepend($x.val.vals, $y)), depth-update(@depth-affected, 2, 1)
 	},
 	
 	cat => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
 		my $y = @stack[*-1];
 		my $x = @stack[*-2];
-		die if $x.type != Obj-Val || $x.val.tag ne 'Tup';
-		die if $y.type != Obj-Val || $y.val.tag ne 'Tup';
-		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => concat($x.val.vals, $y.val.vals)), depth-update(@depth-affected, 2, 1)
+		die if $x.type != Obj-Val;
+		die if $y.type != Obj-Val;
+		die if $x.val.tag ne $y.val.tag;
+		append(@stack.head(*-2), Val.new: type => Obj-Val, val => Obj-Data.new: tag => $x.val.tag, vals => concat($x.val.vals, $y.val.vals)), depth-update(@depth-affected, 2, 1)
 	},
 	
 	safe => sub (@stack, @depth-affected) {
@@ -499,15 +500,15 @@ my %built-ins = {
 	'snoc?' => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
 		my $l = @stack[*-1];
-		die if $l.type != Obj-Val || $l.val.tag ne 'Tup' || $l.val.vals.elems < 1;
-		concat(init(@stack), [Val.new(type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => init($l.val.vals)), $l.val.vals[*-1]]), depth-update(@depth-affected, 1, 2)
+		die if $l.type != Obj-Val || $l.val.vals.elems < 1;
+		concat(init(@stack), [Val.new(type => Obj-Val, val => Obj-Data.new: tag => $l.val.tag, vals => init($l.val.vals)), $l.val.vals[*-1]]), depth-update(@depth-affected, 1, 2)
 	},
 	
 	'cons?' =>  sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
 		my $l = @stack[*-1];
-		die if $l.type != Obj-Val || $l.val.tag ne 'Tup' || $l.val.vals.elems < 1;
-		concat(init(@stack), [Val.new(type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => $l.val.vals.tail(*-1)), $l.val.vals[0]]), depth-update(@depth-affected, 1, 2)
+		die if $l.type != Obj-Val || $l.val.vals.elems < 1;
+		concat(init(@stack), [Val.new(type => Obj-Val, val => Obj-Data.new: tag => $l.val.tag, vals => $l.val.vals.tail(*-1)), $l.val.vals[0]]), depth-update(@depth-affected, 1, 2)
 	}
 }>>.map: { Val.new: type => Func-Val, val => $^fn };
 
