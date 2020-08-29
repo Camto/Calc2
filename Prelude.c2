@@ -35,4 +35,7 @@ and := {True? @assert_bool?-> | @assert_bool? _ @assert_bool? _-> False} ;
 or := {False? @assert_bool?-> | @assert_bool? _ @assert_bool? _-> True} ;
 not := {True?-> False | False?-> True} ;
 
+pi := 3.141592653589793 ;
+tau := 6.283185307179586 ;
+e := 2.718281828459045 ;
 abs := {0<? -> ~ | } ;
