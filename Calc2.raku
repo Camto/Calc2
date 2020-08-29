@@ -504,7 +504,7 @@ my %built-ins = {
 		concat(init(@stack), [Val.new(type => Obj-Val, val => Obj-Data.new: tag => $l.val.tag, vals => init($l.val.vals)), $l.val.vals[*-1]]), depth-update(@depth-affected, 1, 2)
 	},
 	
-	'cons?' =>  sub (@stack, @depth-affected) {
+	'cons?' => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
 		my $l = @stack[*-1];
 		die if $l.type != Obj-Val || $l.val.vals.elems < 1;
