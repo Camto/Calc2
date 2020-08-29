@@ -295,6 +295,9 @@ sub val-eq(Val $x, Val $y) {
 }
 
 my %built-ins = {
+	
+	# All the operators.
+	
 	add => sub (@stack, @depth-affected) {
 		die if @stack.elems < 2;
 		my $y = @stack[*-1];
@@ -509,6 +512,39 @@ my %built-ins = {
 		my $l = @stack[*-1];
 		die if $l.type != Obj-Val || $l.val.vals.elems < 1;
 		concat(init(@stack), [Val.new(type => Obj-Val, val => Obj-Data.new: tag => $l.val.tag, vals => $l.val.vals.tail(*-1)), $l.val.vals[0]]), depth-update(@depth-affected, 1, 2)
+	},
+	
+	# End of operators, here are normal builtins.
+	
+	'any?' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $obj = @stack[*-1];
+		die if $obj.type != Obj-Val;
+		concat(init(@stack), $obj.val.vals.reverse), depth-update(@depth-affected, 1, $obj.val.vals.elems)
+	},
+	
+	'tag' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $obj = @stack[*-1];
+		die if $obj.type != Obj-Val;
+		append(init(@stack), Val.new: type => String-Val, val => $obj.val.tag), depth-update(@depth-affected, 1, 1)
+	},
+	
+	'len' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $obj = @stack[*-1];
+		die if $obj.type != Obj-Val;
+		append(init(@stack), Val.new: type => Integer-Val, val => $obj.val.vals.elems), depth-update(@depth-affected, 1, 1)
+	},
+	
+	'make_obj' => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $tag = @stack[*-1];
+		my $len = @stack[*-2];
+		die if $tag.type != String-Val || $len.type != Integer-Val;
+		die if @stack.elems < 2 + $len.val;
+		my $obj = Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag.val, vals => @stack.head(*-2).tail($len.val).reverse;
+		append(@stack.head(*-(2 + $len.val)), $obj), depth-update(@depth-affected, 2 + $len.val, 1)
 	}
 }>>.map: { Val.new: type => Func-Val, val => $^fn };
 
@@ -644,6 +680,7 @@ sub run($ast, @scopes) {
 			}
 			
 			when Obj-Destr-Node {
+				die if @stack.elems < 1;
 				my $tag = $ast.val;
 				$tag = 'Tup' if $tag eq '()';
 				my $obj = @stack[*-1];
