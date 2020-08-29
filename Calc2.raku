@@ -545,6 +545,105 @@ my %built-ins = {
 		die if @stack.elems < 2 + $len.val;
 		my $obj = Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag.val, vals => @stack.head(*-2).tail($len.val).reverse;
 		append(@stack.head(*-(2 + $len.val)), $obj), depth-update(@depth-affected, 2 + $len.val, 1)
+	},
+	
+	re => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => Decimal-Val, val => $x.val.Complex.re)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	im => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => Decimal-Val, val => $x.val.Complex.im)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	round => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => Integer-Val, val => $x.val.round)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	ceil => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => Integer-Val, val => $x.val.ceiling)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	floor => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => Integer-Val, val => $x.val.floor)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	rand => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-real-type($x.type);
+		append(init(@stack), Val.new(type => Decimal-Val, val => $x.val.rand)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	cos => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => $x.type, val => $x.val.cos)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	sin => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => $x.type, val => $x.val.sin)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	tan => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => $x.type, val => $x.val.tan)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	sec => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => $x.type, val => $x.val.sec)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	csc => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => $x.type, val => $x.val.cosec)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	cot => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => $x.type, val => $x.val.cotan)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	log => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $y = @stack[*-1];
+		my $x = @stack[*-2];
+		die if not is-num-type($x.type) && is-num-type($y.type);
+		append(@stack.head(*-2), Val.new(type => max-num-type(Decimal-Val, max-num-type($x.type, $y.type)), val => $x.val.log($y.val))), depth-update(@depth-affected, 2, 1)
+	},
+	
+	ln => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $x = @stack[*-1];
+		die if not is-num-type($x.type);
+		append(init(@stack), Val.new(type => max-num-type(Decimal-Val, $x.type), val => $x.val.log)), depth-update(@depth-affected, 1, 1)
 	}
 }>>.map: { Val.new: type => Func-Val, val => $^fn };
 
