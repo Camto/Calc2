@@ -663,7 +663,7 @@ sub run($ast, @scopes) {
 				@new-scopes[*-1]{$ast.val.name} = Val.new: type => Func-Val, val => run(AST.new(type => Func-Node, val => append($ast.val.def.val, Case-Data.new:
 					patts => AST.new(type => Patts-Node, val => []),
 					var-decls => AST.new(type => Var-Decls-Node, val => []),
-					expr => AST.new(type => Expr-Node, val => [AST.new: type => Run-It-Node, val => @new-scopes[*-1]{$ast.val.name}.val]))), @new-scopes);
+					expr => AST.new(type => Expr-Node, val => [AST.new: type => Run-It-Node, val => get-var(@new-scopes, $ast.val.name).val]))), @new-scopes);
 				@new-scopes, @stack, @depth-affected
 			}
 			
