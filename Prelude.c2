@@ -30,4 +30,9 @@ partition_eithers := {
 
 fib := {2<? -> | dup 1 - fib swap 2 - fib +} ;
 
+assert_bool? := {@dup True?-> | @dup False?->} ;
+and := {True? @assert_bool?-> | @assert_bool? _ @assert_bool? _-> False} ;
+or := {False? @assert_bool?-> | @assert_bool? _ @assert_bool? _-> True} ;
+not := {True?-> False | False?-> True} ;
+
 abs := {0<? -> ~ | } ;
