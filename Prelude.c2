@@ -18,6 +18,8 @@ foldr := {k z-> go := {>>?-> 'go dip k | _-> 'z} ; go} ;
 cat_maybes := {() {Some?-> >> | _->} foldr} ;
 map_maybe := {map cat_maybes} ;
 
+zip := {>>? b, >>? a-> zip ('a, 'b) >> | _ _-> ()} ;
+
 either := {f _ Left? -> f | _ g Right? -> g} ;
 lefts := {{Left? -> `Some | Right? _ -> None} map_maybe} ;
 rights := {{Right? -> `Some | Left? _ -> None} map_maybe} ;
