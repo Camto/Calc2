@@ -646,13 +646,8 @@ sub run($ast, @scopes) {
 				my $tag = $ast.val;
 				$tag = 'Tup' if $tag eq '()';
 				my $obj = @stack[*-1];
-				given $obj.type {
-					when Obj-Val {
-						die if $obj.val.tag ne $tag;
-						concat(init(@stack), $obj.val.vals.reverse), depth-update(@depth-affected, 1, $obj.val.vals.elems)
-					}
-					default { say 'NOT IMPLEMENTED YET AAA'; say $obj ; @stack, depth-update(@depth-affected, 1, 1) }
-				}
+				die if $obj.type != Obj-Val || $obj.val.tag ne $tag;
+				concat(init(@stack), $obj.val.vals.reverse), depth-update(@depth-affected, 1, $obj.val.vals.elems)
 			}
 			
 			when Obj-Make-Node {
@@ -660,54 +655,10 @@ sub run($ast, @scopes) {
 				$tag = 'Tup' if $tag eq '()';
 				my $obj-len = $ast.val.len;
 				die if @stack.elems < $obj-len;
-				given $tag {
-					when 'Comp' {
-						die if $obj-len != 2;
-						my $y = @stack[*-1];
-						my $x = @stack[*-2];
-						die if not is-real-type($x.type) && is-real-type($y.type);
-						CATCH { default { say 'Special object Comp can only take two items, which can be decimals or integers, for the real and imaginary components.'; die } }
-						append(@stack.head(*-2), Val.new: type => Complicated-Val, val => $x.val + $y.val * i), depth-update(@depth-affected, 2, 1)
-					}
-					
-					when 'Dec' {
-						die if $obj-len != 2;
-						my $y = @stack[*-1];
-						my $x = @stack[*-2];
-						die if $x.type != Integer-Val;
-						die if $y.type != Decimal-Val || $y.val < 0 || $y.val >= 1;
-						CATCH { default { say 'Special object Dec can only take two items, an integer and a decimal.'; die } }
-						append(@stack.head(*-2), Val.new: type => Decimal-Val, val => $x.val + $y.val), depth-update(@depth-affected, 2, 1)
-					}
-					
-					when 'Int' {
-						die if $obj-len != 1;
-						my $l = @stack[*-1];
-						die if $l.type != Obj-Val;
-						die if [||] $l.val.vals.map: { $_.type != Integer-Val };
-						die if [||] $l.val.vals.map: { $_.val < 0 || $_.val > 9 };
-						CATCH { default { say 'Special object Int can only take one item, and that is a list of digits.'; die } }
-						append(init(@stack), Val.new: type => Integer-Val, val => $l.val.vals.map(*.val).join.Int), depth-update(@depth-affected, 1, 1);
-					}
-					
-					when 'Str' {
-						my @l = @stack.tail($obj-len).reverse;
-						die if [||] @l.map: { $_.type != Integer-Val };
-						CATCH { default { say 'Special object Str can only integers, which get turned into their unicode point.'; die } }
-						append(@stack.head(*-$obj-len), Val.new: type => String-Val, val => @l.map(*.val).chrs), depth-update(@depth-affected, $obj-len, 1)
-					}
-					
-					when 'Func' {
-						say "Can\'t make Func objects sorry."; die
-					}
-					
-					default {
-						append(
-							@stack.head(*-$obj-len),
-							Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag, vals => @stack.tail($obj-len).reverse
-						), depth-update(@depth-affected, $obj-len, 1)
-					}
-				}
+				append(
+					@stack.head(*-$obj-len),
+					Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag, vals => @stack.tail($obj-len).reverse
+				), depth-update(@depth-affected, $obj-len, 1)
 			}
 			
 			when Ident-Node {
