@@ -32,7 +32,7 @@ partition_eithers := {
 add_vectors := {()? x1 y1 ()? x2 y2 -> (x1 x2 +, y1 y2 +)} ;
 add_vectors (x1, y1) (x2, y2) = (x1 + x2, y1 + y2)
 
-dip := {f-> swap f swap} ;
+dip := {f v-> f 'v} ;
 
 reverse := {() {swap >>} fold} ;
 rev = {[] {swap +} fold} ;

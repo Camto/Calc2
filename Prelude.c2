@@ -6,7 +6,7 @@ drop := {_->} ;
 swap := {a b-> 'a 'b} ;
 rot := {a b c-> 'a 'c 'b} ;
 unrot := {a b c-> 'b 'a 'c} ;
-dip := {f-> swap f swap} ;
+dip := {f v-> f 'v} ;
 
 map := {_->} ;
 map |= {f Some?-> f `Some} ;
