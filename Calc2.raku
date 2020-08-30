@@ -727,6 +727,19 @@ my %built-ins = {
 			default { die; }
 		}
 		append(init(@stack), $n), depth-update(@depth-affected, 1, 1)
+	},
+	
+	# I/O functions.
+	
+	in => sub (@stack, @depth-affected) {
+		append(@stack, Val.new: type => String-Val, val => get), depth-update(@depth-affected, 0, 1)
+	},
+	
+	out => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $val = @stack[*-1];
+		say print-val($val);
+		init(@stack), depth-update(@depth-affected, 1, 0)
 	}
 }>>.map: { Val.new: type => Func-Val, val => $^fn };
 
