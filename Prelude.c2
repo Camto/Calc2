@@ -9,6 +9,9 @@ swap := {a b-> 'a 'b} ;
 rot := {a b c-> 'a 'c 'b} ;
 unrot := {a b c-> 'b 'a 'c} ;
 dip := {f v-> f 'v} ;
+nip := {swap drop} ;
+tuck := {dup rot} ;
+over := {swap tuck} ;
 
 map := {_->} ;
 map |= {f Some?-> f `Some} ;
