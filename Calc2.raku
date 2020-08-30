@@ -294,6 +294,25 @@ sub val-eq(Val $x, Val $y) {
 	}
 }
 
+sub print-stack(@stack) { @stack.map(&print-val).join: "\n" }
+
+sub print-val(Val $val) {
+	given $val.type {
+		when Obj-Val {
+			if $val.val.tag eq 'Tup' {
+				"({$val.val.vals.map(&print-val).join: ', '})"
+			} else {
+				"{$val.val.vals.map(&print-val).reverse.join: ' '} {'`' x $val.val.vals.elems}{$val.val.tag}"
+			}
+		}
+		when Complicated-Val { $val.val.Str }
+		when Decimal-Val { $val.val.Str }
+		when Integer-Val { $val.val.Str }
+		when String-Val { $val.val }
+		when Func-Val { '{ <function body> }' }
+	}
+}
+
 my %built-ins = {
 	
 	# All the operators.
@@ -898,6 +917,6 @@ sub run($ast, @scopes) {
 
 my $prelude = slurp 'Prelude.c2';
 
-say run(Calc2.parse($prelude ~ get, actions => Calc2er).made, [])([], [0]) while True;
+say print-stack(run(Calc2.parse($prelude ~ get, actions => Calc2er).made, [])([], [0])[0]) while True;
 # say Calc2.parse($prelude ~ get, actions => Calc2er).made while True;
 # say Calc2.parse: $prelude ~ get while True;
