@@ -312,8 +312,10 @@ sub print-val(Val $val) {
 		when Obj-Val {
 			if $val.val.tag eq 'Tup' {
 				"({$val.val.vals.map(&print-val).join: ', '})"
-			} else {
+			} elsif $val.val.vals.elems > 0 {
 				"{$val.val.vals.map(&print-val).reverse.join: ' '} {'`' x $val.val.vals.elems}{$val.val.tag}"
+			} else {
+				$val.val.tag
 			}
 		}
 		when Complicated-Val { $val.val.Str }
