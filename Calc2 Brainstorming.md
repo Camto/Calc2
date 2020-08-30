@@ -82,11 +82,11 @@ Variables can only be after a `->`, `{`, or `,` (specifically in parameters) bec
 ## DF Example Updated
 
 ```
-df := {(0,()) {run_char 'wrap map_fst} fold} ;
-run_char := {()? -> unrot: "i"=? ->i | "d"=? ->d | "s"=? ->s | "o"=? ->o | _->(,)} ;
+df := {(0,()) {run_char >>? wrap >>} foldl} ;
+run_char := {'()? dip []: "i"=? ->i | "d"=? ->d | "s"=? ->s | "o"=? ->o | _->(,)} ;
 wrap := {256=? ->0 | 1~ =? ->0 |->} ;
 i := {(1+,)} ; d := {(1-,)} ; s := {(2^,)} ; o := {dup (,<<)} ;
-"iiodddoisoisoiso" df
+"iiodddoisoisoiso" "" split df
 ```
 
 ## WTF are objects?
