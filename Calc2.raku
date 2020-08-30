@@ -731,11 +731,11 @@ my %built-ins = {
 	
 	# I/O functions.
 	
-	in => sub (@stack, @depth-affected) {
+	input => sub (@stack, @depth-affected) {
 		append(@stack, Val.new: type => String-Val, val => get), depth-update(@depth-affected, 0, 1)
 	},
 	
-	out => sub (@stack, @depth-affected) {
+	print => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
 		my $val = @stack[*-1];
 		say print-val($val);
