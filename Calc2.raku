@@ -20,6 +20,7 @@ grammar Calc2 {
 		|| <infix-tuple>
 		|| <func-expr>
 		|| <match>
+		|| <comment>
 	}
 	token complicated { [\d+ ['.' \d+]? ['+' || '-']]? \d+ ['.' \d+]? 'i' }
 	token decimal { \d+ '.' \d+ }
@@ -45,6 +46,7 @@ grammar Calc2 {
 	rule infix-tuple { '(' <expr>? [',' <expr>]* ')' }
 	rule func-expr { '{' <func> '}' }
 	rule match { ':' <![=]> <func> }
+	token comment { '#' <-[\n]>* }
 	
 	rule var-decls { <decl>+ }
 	rule decl { <var-decl> || <pipe-decl> }
@@ -245,6 +247,15 @@ class Calc2er {
 	}
 	
 	method match($/) { make $<func>.made }
+	
+	method comment($match) {
+		$match.make: AST.new: type => Func-Node, val => [
+			Case-Data.new:
+				patts => AST.new(type => Patts-Node, val => []),
+				var-decls => AST.new(type => Var-Decls-Node, val => []),
+				expr => AST.new(type => Expr-Node, val => [])
+		]
+	}
 }
 
 sub max-num-type(Type $t1, Type $t2) {
