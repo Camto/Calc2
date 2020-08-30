@@ -1,5 +1,7 @@
 do := {fn-> fn} ;
 id := {} ;
+compose := {b a-> {a b}} ;
+flip := {'swap swap compose} ;
 
 dup := {a-> 'a 'a} ;
 drop := {_->} ;
@@ -13,11 +15,12 @@ map |= {f Some?-> f `Some} ;
 map |= {f Right?-> f `Right} ;
 map |= {f <<?-> f {'f map} dip <<} ;
 
-foldr := {k z-> go := {>>?-> 'go dip k | _-> 'z} ; go} ;
+foldr := {f v-> go := {>>?-> 'go dip f | _-> 'v} ; go} ;
+foldl := {f v-> reverse 'v 'f foldr} ;
 
 cat_maybes := {() {Some?-> >> | _->} foldr} ;
 map_maybe := {map cat_maybes} ;
-
+reverse := {() '<< foldr} ;
 zip := {>>? b, >>? a-> zip ('a, 'b) >> | _ _-> ()} ;
 
 either := {f _ Left? -> f | _ g Right? -> g} ;
