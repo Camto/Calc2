@@ -516,7 +516,7 @@ my %built-ins = {
 	
 	# End of operators, here are normal builtins.
 	
-	# Generic object stuff.
+	# Generic object functions.
 	
 	'any?' => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
