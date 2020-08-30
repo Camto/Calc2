@@ -648,6 +648,66 @@ my %built-ins = {
 		my $x = @stack[*-1];
 		die if not is-num-type($x.type);
 		append(init(@stack), Val.new(type => max-num-type(Decimal-Val, $x.type), val => $x.val.log)), depth-update(@depth-affected, 1, 1)
+	},
+	
+	# List and string functions.
+	
+	slice => sub (@stack, @depth-affected) {
+		die if @stack.elems < 3;
+		my $t = @stack[*-1];
+		my $f = @stack[*-2];
+		my $ls = @stack[*-3];
+		die if $t.type != Integer-Val || $f.type != Integer-Val || $ls.type != Obj-Val;
+		die if $t.val < 0 || $f.val < 0;
+		append(@stack.head(*-3), Val.new: type => Obj-Val, val => Obj-Data.new: tag => $ls.val.tag, vals => $ls.val.vals[$f.val ..^ $t.val]), depth-update(@depth-affected, 3, 1)
+	},
+	
+	join => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $joiner = @stack[*-1];
+		my $ls = @stack[*-2];
+		die if $joiner.type != String-Val;
+		die if $ls.type != Obj-Val;
+		die if [||] $ls.val.vals.map: { $_.type != String-Val };
+		append(@stack.head(*-2), Val.new: type => String-Val, val => $ls.val.vals.map({ $_.val }).join($joiner.val)), depth-update(@depth-affected, 2, 1)
+	},
+	
+	split => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $splitter = @stack[*-1];
+		my $s = @stack[*-2];
+		die if $splitter.type != String-Val || $s.type != String-Val;
+		my $split = $s.val.split($splitter.val);
+		$split = init($split).tail(*-1) if $splitter.val eq "";
+		my $ls = Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => $split.map: { Val.new: type => String-Val, val => $_ };
+		append(@stack.head(*-2), $ls), depth-update(@depth-affected, 2, 1)
+	},
+	
+	num_to_str => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $n = @stack[*-1];
+		die if not is-num-type($n.type);
+		append(init(@stack), Val.new: type => String-Val, val => $n.val.Str), depth-update(@depth-affected, 1, 1)
+	},
+	
+	str_to_num => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $s = @stack[*-1];
+		die if $s.type != String-Val;
+		my $n;
+		given $s.val {
+			when / ^ [\d+ ['.' \d+]? ['+' || '-']]? \d+ ['.' \d+]? 'i' $ / {
+				$n = Val.new: type => Complicated-Val, val => $s.val.Complex;
+			}
+			when / ^ \d+ '.' \d+ $ / {
+				$n = Val.new: type => Decimal-Val, val => $s.val.Num;
+			}
+			when / ^ \d+ $ / {
+				$n = Val.new: type => Integer-Val, val => $s.val.Int;
+			}
+			default { die; }
+		}
+		append(init(@stack), $n), depth-update(@depth-affected, 1, 1)
 	}
 }>>.map: { Val.new: type => Func-Val, val => $^fn };
 

@@ -23,8 +23,15 @@ foldl := {f v-> reverse 'v 'f foldr} ;
 
 cat_maybes := {() {Some?-> >> | _->} foldr} ;
 map_maybe := {map cat_maybes} ;
+filter := {p?-> {dup p?: True?-> `Some | False? _-> None} map_maybe} ;
+in := {val-> {'val =} filter len 0>} ;
 reverse := {() '<< foldr} ;
 zip := {>>? b, >>? a-> zip ('a, 'b) >> | _ _-> ()} ;
+fst := {>>? nip} ;
+snd := {>>? drop >>? nip} ;
+tail := {>>? drop} ;
+lst := {<<? nip} ;
+init := {<<? drop} ;
 
 either := {f _ Left? -> f | _ g Right? -> g} ;
 lefts := {{Left? -> `Some | Right? _ -> None} map_maybe} ;
