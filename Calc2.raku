@@ -516,6 +516,8 @@ my %built-ins = {
 	
 	# End of operators, here are normal builtins.
 	
+	# Generic object stuff.
+	
 	'any?' => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
 		my $obj = @stack[*-1];
@@ -546,6 +548,8 @@ my %built-ins = {
 		my $obj = Val.new: type => Obj-Val, val => Obj-Data.new: tag => $tag.val, vals => @stack.head(*-2).tail($len.val).reverse;
 		append(@stack.head(*-(2 + $len.val)), $obj), depth-update(@depth-affected, 2 + $len.val, 1)
 	},
+	
+	# Math functions.
 	
 	re => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
