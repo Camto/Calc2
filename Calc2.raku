@@ -689,8 +689,10 @@ my %built-ins = {
 		my $t = @stack[*-1];
 		my $f = @stack[*-2];
 		my $ls = @stack[*-3];
-		die if $t.type != Integer-Val || $f.type != Integer-Val || $ls.type != Obj-Val;
-		die if $t.val < 0 || $f.val < 0;
+		die if $f.type != Integer-Val || $t.type != Integer-Val || $ls.type != Obj-Val;
+		die if $f.val < 0 || $t.val < 0;
+		die if $t.val > $ls.val.vals.elems;
+		die if $f.val > $t.val;
 		append(@stack.head(*-3), Val.new: type => Obj-Val, val => Obj-Data.new: tag => $ls.val.tag, vals => $ls.val.vals[$f.val ..^ $t.val]), depth-update(@depth-affected, 3, 1)
 	},
 	
