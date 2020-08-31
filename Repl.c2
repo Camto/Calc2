@@ -1,9 +1,3 @@
-swap := {a b-> 'a 'b} ;
-nip := {a b-> 'a} ;
-dip := {f v-> f 'v} ;
-foldl := {f v-> go := {<<?-> 'go dip f | _-> 'v} ; go} ;
-reverse := {() '>> foldl} ;
-
 # debug := {v-> 'v print 'v} ;
 prelude := "Prelude.c2" read "" split ;
 print_stack := {>>?-> print print_stack | _->} ;

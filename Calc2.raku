@@ -985,6 +985,6 @@ sub run($ast, @scopes) {
 	}
 }
 
-run(Calc2.parse(slurp('Repl.c2'), actions => Calc2er).made, [])([], [0])[0];
+run(Calc2.parse(slurp('Prelude.c2') ~ slurp('Repl.c2'), actions => Calc2er).made, [])([], [0])[0];
 # say Calc2.parse(get, actions => Calc2er).made while True;
 # say Calc2.parse: get while True;
