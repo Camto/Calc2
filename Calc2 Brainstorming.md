@@ -87,7 +87,7 @@ df := {
 	run_char := {'()? dip []: "i"=? ->i | "d"=? ->d | "s"=? ->s | "o"=? ->o | _->(,)} ;
 	wrap := {256=? ->0 | 1~ =? ->0 |->} ;
 	i := {(1+,)} ; d := {(1-,)} ; s := {(2^,)} ; o := {dup (,<<)} ;
-"iiodddoisoisoiso" "" split df
+	main} ;
 ```
 
 ## WTF are objects?
