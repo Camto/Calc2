@@ -305,8 +305,6 @@ sub val-eq(Val $x, Val $y) {
 	}
 }
 
-sub print-stack(@stack) { @stack.map(&print-val).join: "\n" }
-
 sub print-val(Val $val) {
 	given $val.type {
 		when Obj-Val {
@@ -776,6 +774,13 @@ my %built-ins = {
 		init(@stack), depth-update(@depth-affected, 1, 0)
 	},
 	
+	print_no_nl => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $val = @stack[*-1];
+		print print-val($val);
+		init(@stack), depth-update(@depth-affected, 1, 0)
+	},
+	
 	read => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
 		my $name = @stack[*-1];
@@ -978,8 +983,8 @@ sub run($ast, @scopes) {
 	}
 }
 
-my $prelude = slurp 'Prelude.c2';
+my $repl = slurp 'Repl.c2';
 
-say print-stack(run(Calc2.parse($prelude ~ get, actions => Calc2er).made, [])([], [0])[0]) while True;
-# say Calc2.parse($prelude ~ get, actions => Calc2er).made while True;
-# say Calc2.parse: $prelude ~ get while True;
+run(Calc2.parse($repl, actions => Calc2er).made, [])([], [0])[0];
+# say Calc2.parse(get, actions => Calc2er).made while True;
+# say Calc2.parse: get while True;
