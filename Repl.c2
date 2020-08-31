@@ -1,4 +1,16 @@
+swap := {a b-> 'a 'b} ;
+nip := {a b-> 'a} ;
+dip := {f v-> f 'v} ;
+foldl := {f v-> go := {<<?-> 'go dip f | _-> 'v} ; go} ;
+reverse := {() '>> foldl} ;
+
+# debug := {v-> 'v print 'v} ;
 prelude := "Prelude.c2" read "" split ;
 print_stack := {>>?-> print print_stack | _->} ;
-repl := {"> " print_no_nl 'prelude input "" split <> "" join eval print_stack repl} ;
-repl
+repl := {funcs ->
+	"> " print_no_nl
+	input "" split:
+		>>? "$"=? -> 'funcs swap <> repl |
+		'funcs swap <> "" join 'eval & nip [Some?-> ()? reverse | None?-> ("Error")] print_stack
+		'funcs repl} ;
+'prelude repl
