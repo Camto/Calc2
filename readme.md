@@ -23,3 +23,9 @@ A simple identifier in a pattern (starting with a lowercase letter or underscore
 ## Back to pattern matching
 
 This same pipes and arrows syntax for pattern matching can be used in other places than just `[]`. Very useful syntax sugar if variable definition syntax, which looks like `a := 2 ; 'a 'a`, rewriting the example from earlier. You can have any number of definitions right before the body of any case, or on the top level expression. On the right side of the `:=` is the value, which is a simple expression and is run *before* the pattern on the left of the `:=`. The single variable definition is terminated by a `;`, and many of them can be chained together. The left side of the definition being a pattern, it can use destructuring, for example: ``` Pair? first second := 2 1 ``Pair ; 'first ``` will assign `first` to `1` and `second` to `2`, then push `first` onto the stack. But there's still a very important place where pattern matching is used...
+
+## Functions
+
+Wrapping a pattern match in `{}` instead of `[]` will not call it, but will push a function to the stack that can then be called. To actually call it, you can use the predefined variable `do`, which is itself defined as `do := {fn-> fn} ;` (pop something, name it `fn`, then call it). Remember that using a variables name without a leading quote will call it rather than push it. Taking the duplication example from earlier, we can now use `2 {a-> 'a 'a} do`, which would be better as its own function. There actually one like that in the prelude, near `do`! It called `dup`, and it's defined as `dup := {a-> 'a 'a} ;`. After reading all this, be sure to check out the prelude (`Prelude.c2`), which has plenty of useful functions and example of Calc2 code. All this talk of functions leads us to...
+
+## The built-in functions
