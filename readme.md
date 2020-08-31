@@ -1,4 +1,16 @@
-https://repl.it/@Calc2/Calc2
+My teammate was https://repl.it/@jpVinnely
+
+Here is a little code sample:
+```
+# Deadfish implementation, https://esolangs.org/wiki/Deadfish
+# Example use: "iiodddoisoisoiso" df
+df := {
+  main := {"" split (0,()) {run_char >>? wrap >>} foldl snd} ;
+  run_char := {'()? dip : "i"=? ->i | "d"=? ->d | "s"=? ->s | "o"=? ->o | _->(,)} ;
+  wrap := {256=? ->0 | 1~ =? ->0 |->} ;
+  i := '(1+,) ; d := '(1-,) ; s := '(2^,) ; o := {dup (,<<)} ;
+  main} ;
+```
 
 # An introduction to Calc2
 
