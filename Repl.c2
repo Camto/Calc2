@@ -5,7 +5,7 @@ repl := {funcs ->
 	"> " print_no_nl
 	input "" split:
 		>>? "$"=? -> 'funcs swap <> repl |
-		'funcs swap <> "" join 'eval & nip [Some?-> ()? reverse | None?-> ("Error")] print_stack
+		'funcs swap <> "" join 'eval & nip [Some?-> ()? | None?-> ("Error")] print_stack
 		'funcs repl} ;
 
 "Welcome to the Calc2 repl!
