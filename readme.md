@@ -112,3 +112,7 @@ Here are the built-ins for I/O:
 * `print_no_nl` - Same but doesn't terminate with a newline.
 * `read` - Read a file with the given name.
 * `write` - Write the left argument to the file named the right argument.
+
+## The repl
+
+Click to start the repl https://repl.it/@Calc2/Calc2
