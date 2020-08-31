@@ -548,6 +548,15 @@ my %built-ins = {
 	
 	# End of operators, here are normal builtins.
 	
+	# THE ALMIGHTY EVAL!
+	eval => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $prog = @stack[*-1];
+		die if $prog.type != String-Val;
+		my @eval-res = run(Calc2.parse($prog.val, actions => Calc2er).made, [])([], [0])[0];
+		append(init(@stack), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @eval-res), depth-update(@depth-affected, 1, 1)
+	},
+	
 	# Generic object functions.
 	
 	'any?' => sub (@stack, @depth-affected) {
