@@ -47,7 +47,7 @@ Many functions in the prelude depend on certain functions and operators you *won
 * `<>` - The left and right objects are merged. It throws if their tags are different. For example, `(1, 2) (3, 4) <>` will give `(1, 2, 3, 4)` and `2 1 ``List 4 3 ``List <>` will give `4 3 2 1 ````List`.
 * `&` - This runs the function on the top of the stack in a safe environment, on a *copy* of the current stack. If the function throws, `&` returns an empty `None` object. Otherwise is removes the items that were touched, and pack them in a `Some` object. For example, `3 2 1 'swap &` will leave the stack as ``3 2 1 (2, 1) `Some`` because `swap` only touched `1` and `2`, but left `3` alone. The numbers in `(2, 1)` were effectively swapped as the first item represents the top of the stack. On the other hand, `3 2 1 'Pair? &` will leave the stack as `3 2 1 None` since `Pair?` throws on `1`.
 
-These next operators are typically usede for pattern matching:
+These next operators are typically used for pattern matching:
 
 * `=?` - Pop the top two elements, if they are equal, do nothing, otherwise throw.
 * `/=?` - Pop the top two elements, if they are *not* equal, leave the left argument on the stack, otherwise throw.
