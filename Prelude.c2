@@ -1,31 +1,35 @@
 do := {fn-> fn} ;
+dip := {f v-> f 'v} ;
 id := {} ;
 compose := {b a-> {a b}} ;
 flip := {'swap swap compose} ;
 
+# Stack manipulation function.
 dup := {a-> 'a 'a} ;
 drop := {_->} ;
 swap := {a b-> 'a 'b} ;
 rot := {a b c-> 'a 'c 'b} ;
 unrot := {a b c-> 'b 'a 'c} ;
-dip := {f v-> f 'v} ;
 nip := {swap drop} ;
 tuck := {dup rot} ;
 over := {swap tuck} ;
 
+# Folding functions.
+foldl := {f v-> go := {<<?-> 'go dip f | _-> 'v} ; go} ;
+foldr := {f v-> reverse 'v 'f foldl} ;
+
+# Mapping over various objects.
 map := {_->} ;
 map |= {f Some?-> f `Some} ;
 map |= {f Right?-> f `Right} ;
-map |= {f <<?-> f {'f map} dip <<} ;
+map |= {f-> () {f <<} foldl} ;
 
-foldr := {f v-> go := {>>?-> 'go dip f | _-> 'v} ; go} ;
-foldl := {f v-> reverse 'v 'f foldr} ;
-
-cat_maybes := {() {Some?-> >> | _->} foldr} ;
+# List functions.
+cat_maybes := {() {Some?-> << | _->} foldl} ;
 map_maybe := {map cat_maybes} ;
 filter := {p?-> {dup p?: True?-> `Some | False? _-> None} map_maybe} ;
 in := {val-> {'val =} filter len 0>} ;
-reverse := {() '<< foldr} ;
+reverse := {() '>> foldl} ;
 zip := {>>? b, >>? a-> zip ('a, 'b) >> | _ _-> ()} ;
 fst := {>>? nip} ;
 snd := {>>? drop >>? nip} ;
@@ -33,21 +37,23 @@ tail := {>>? drop} ;
 lst := {<<? nip} ;
 init := {<<? drop} ;
 
+# Functions on Either.
 either := {f _ Left? -> f | _ g Right? -> g} ;
 lefts := {{Left? -> `Some | Right? _ -> None} map_maybe} ;
 rights := {{Right? -> `Some | Left? _ -> None} map_maybe} ;
 partition_eithers := {
-	left := {l ()?-> ('l>>,)} ;
-	right := {r ()?-> (,'r>>)} ;
-	((),()) {'right 'left either} foldr} ;
+	left := {l ()?-> ('l<<,)} ;
+	right := {r ()?-> (,'r<<)} ;
+	((),()) {'right 'left either} foldl} ;
 
-fib := {2<? -> | dup 1 - fib swap 2 - fib +} ;
-
+# Boolean functions
+# They work using objects with no values, True and False.
 assert_bool? := {@dup True?-> | @dup False?->} ;
 and := {True? @assert_bool?-> | @assert_bool? _ @assert_bool? _-> False} ;
 or := {False? @assert_bool?-> | @assert_bool? _ @assert_bool? _-> True} ;
 not := {True?-> False | False?-> True} ;
 
+# Math functions
 pi := 3.141592653589793 ;
 tau := 6.283185307179586 ;
 e := 2.718281828459045 ;
@@ -62,15 +68,18 @@ max := {>=?-> | @swap >?->} ;
 min := {<=?-> | @swap <?->} ;
 evn := {2 %%} ;
 odd := {evn not} ;
-rand |= {@comp? 0 /=? -> rand 'rand dip comp} ;
+rand |= {@comp? 0 /=? -> rand 'rand dip comp} ; # Adapt rand to complex numbers.
 sqrt := {0.5 ^} ;
 cbrt := {1 3 / ^} ;
 root := {recip ^} ;
+fib := {2<? -> | dup 1 - fib {2 - fib} dip +} ;
 
 nl := "\n" ;
 lines := {'nl split} ;
 unlines := {'nl join} ;
 
+# Deadfish implementation, https://esolangs.org/wiki/Deadfish
+# Example use: "iiodddoisoisoiso" df
 df := {
 	main := {"" split (0,()) {run_char >>? wrap >>} foldl snd} ;
 	run_char := {'()? dip []: "i"=? ->i | "d"=? ->d | "s"=? ->s | "o"=? ->o | _->(,)} ;
