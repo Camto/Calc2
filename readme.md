@@ -1,6 +1,6 @@
 # An introduction to Calc2
 
-Briefly, Calc2 is a stack based language with pattern matching. Everything is called an "expression", which is just a sequence of instructions, like pushing something onto the stack, popping something, or calling a function. There are number literals, which push themselves onto the stack:
+Briefly, Calc2 is a stack based language with pattern matching. Everything is an "expression", which is just a sequence of instructions, like pushing something onto the stack, popping something, or calling a function. There are number literals, which push themselves onto the stack:
 
 * Integer literals. Example: `10`
 * Decimal literals, with a decimal point (`.`) and digits both before *and* after it. Example: `3.14`
