@@ -1,0 +1,4 @@
+prelude := "Prelude.c2" read "" split ;
+print_stack := {>>?-> print print_stack | _->} ;
+repl := {"> " print_no_nl 'prelude input "" split <> "" join eval print_stack repl} ;
+repl
