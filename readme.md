@@ -52,4 +52,4 @@ These next operators are typically used for pattern matching:
 * `=?` - Pop the top two elements, if they are equal, do nothing, otherwise throw.
 * `/=?` - Pop the top two elements, if they are *not* equal, leave the left argument on the stack, otherwise throw.
 * `<?`/`>?`/`<=?`/`>=?` - Compare the top two numbers, if the comparison would be true, leave the left argument on the stack, otherwise throw.
-* `<<?`/`>>?` - Pop the top element. Throw if it's not an object or is an empty object. Otherwise, separate the last/first element from the rest of the object, leaving the individual element above the rest of the object. Essentially the inverse of `<<`/`>>`. For example, `3 2 1 ```List >>?` gives `3 2 ``List 1` and `` 1 `Singleton >>?`` gives `Singleton 1`.
+* `<<?`/`>>?` - Pop the top element. Throw if it's not an object or is an empty object. Otherwise, separate the last/first element from the rest of the object, leaving the individual element above the rest of the object. Essentially the inverse of `<<`/`>>`. For example, `(1, 2, 3) >>?` gives `(2, 3) 1` and `` 1 `Singleton >>?`` gives `Singleton 1`.
