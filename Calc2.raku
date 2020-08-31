@@ -553,7 +553,7 @@ my %built-ins = {
 		my $prog = @stack[*-1];
 		die if $prog.type != String-Val;
 		my @eval-res = run(Calc2.parse($prog.val, actions => Calc2er).made, [])([], [0])[0];
-		die if not @eval-res[0];
+		die if @eval-res eqv False;
 		append(init(@stack), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @eval-res.reverse), depth-update(@depth-affected, 1, 1)
 	},
 	
