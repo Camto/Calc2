@@ -765,6 +765,22 @@ my %built-ins = {
 		my $val = @stack[*-1];
 		say print-val($val);
 		init(@stack), depth-update(@depth-affected, 1, 0)
+	},
+	
+	read => sub (@stack, @depth-affected) {
+		die if @stack.elems < 1;
+		my $name = @stack[*-1];
+		die if $name.type != String-Val;
+		append(init(@stack), Val.new: type => String-Val, val => slurp $name.val), depth-update(@depth-affected, 1, 1)
+	},
+	
+	write => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $name = @stack[*-1];
+		my $contents = @stack[*-2];
+		die if $name.type != String-Val || $contents.type != String-Val;
+		spurt $name.val, $contents.val;
+		@stack.head(*-2), depth-update(@depth-affected, 2, 0)
 	}
 }>>.map: { Val.new: type => Func-Val, val => $^fn };
 
