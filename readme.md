@@ -12,9 +12,9 @@ There are also string literals, which can always be multline and escape with ` \
 
 Apart from the numbers, strings, and functions (more on functions later), Calc2 only has one more datatype, objects. Objects are simply a list of values with a given tag, which starts with a capital letter and can have more alphanumeric characters after. The instruction to make an object, is just any number of backticks (`` ` ``), followed by the tag. That instruction pops as many values for the object as it has backticks, and stores them in a freshly pushed object with the given tag. The element on the top of the stack will end up first in the object. For example, `2 1 ``Pair` will push a `Pair` object onto the stack with a `1` and a `2` in it.
 
-A nice piece of syntax sugar for objects is the `Tup` object, which can use `()` as its name. For example `2 1 ``()`. Run that example, and you'll notice the output is formatted differently, and that's because `Tup` has additional infix syntax on top of that: `(1, 2)` will give you the same thing as the above example (first item in the tuple = top item of the stack when being created). The tuple's values are expressions though, and can access outside values. They will run left-to-right, as shown in this example: ```3 2 1 (``Pair, 0, `Singleton)``` will give ```(2 1 ``Pair, 0, 3 `Singleton)```. This syntax only makes `Tup` objects ever, which are essentially the language's form of lists.
+A nice piece of syntax sugar for objects is the `Tup` object, which can use `()` as its name. For example `2 1 ``()`. Run that example, and you'll notice the output is formatted differently, and that's because `Tup` has additional infix syntax on top of that: `(1, 2)` gives you the same thing as the above example (first item in the tuple = top item of the stack when being created). The tuple's values are expressions though, and can access outside values. They will run left-to-right, as shown in this example: ```3 2 1 (``Pair, 0, `Singleton)``` gives ```(2 1 ``Pair, 0, 3 `Singleton)```. This syntax only makes `Tup` objects ever, which are essentially the language's form of lists.
 
-There are several ways to get values out of objects, the simplest is destructuring. An instruction that is a tag name with a question mark (`?`) at the end, will pop an object, and if it has the same tag (`()?` is the same as `Tup?`), then it will push its contents back onto the stack. For example, `2 1 ``Pair Pair?` will give the same thing as `2 1`. But what if the tag isn't the same? Then it throws an error. As to why, we now have to move on to...
+There are several ways to get values out of objects, the simplest is destructuring. An instruction that is a tag name with a question mark (`?`) at the end, will pop an object, and if it has the same tag (`()?` is the same as `Tup?`), then it will push its contents back onto the stack. For example, `2 1 ``Pair Pair?` gives the same thing as `2 1`. But what if the tag isn't the same? Then it throws an error. As to why, we now have to move on to...
 
 ## Pattern matching
 
@@ -36,15 +36,15 @@ Wrapping a pattern match in `{}` instead of `[]` will not call it, but will push
 
 Many functions in the prelude depend on certain functions and operators you *won't* find in the prelude, those are the built-ins, and are hardwired into the Calc2 source. Here they will *all* be described, starting with the operators:
 
-* `+`/`-`/`*`/`/` - These are the normal math operators, except that now their right argument is the top element of the stack and their left argument the element under that one. (`3 1 -` will give `2`)
+* `+`/`-`/`*`/`/` - These are the normal math operators, except that now their right argument is the top element of the stack and their left argument the element under that one. (`3 1 -` gives `2`)
 * `~` - This is just unary negation.
 * `^` - Same as the normal math operators, but now it's exponentiation.
 * `%` - Same again, but now it's modulus.
 * `%%` - Same again, but returns an empty `True` object if the left argument is divisible by the right argument, otherwise an empty `False` object.
 * `<`/`>`/`<=`/`>=` - Same again, but checking for less than/more than/less than or equal to/more than or equal to.
 * `=`/`/=` - Deep equality/disequality check between anything but two functions.
-* `<<`/`>>` - The right argument is appended to the right argument, which must be an object. The arrows point towards what end the element is being appended to. For example, `(1, 2) 3 <<` will give `(1, 2, 3)` and `2 1 ``List 3 <<` will give `3 2 1 ```List`, because the `3` was appended to the end of both objects.
-* `<>` - The left and right objects are merged. It throws if their tags are different. For example, `(1, 2) (3, 4) <>` will give `(1, 2, 3, 4)` and `2 1 ``List 4 3 ``List <>` will give `4 3 2 1 ````List`.
+* `<<`/`>>` - The right argument is appended to the right argument, which must be an object. The arrows point towards what end the element is being appended to. For example, `(1, 2) 3 <<` gives `(1, 2, 3)` and `2 1 ``List 3 <<` gives `3 2 1 ```List`, because the `3` was appended to the end of both objects.
+* `<>` - The left and right objects are merged. It throws if their tags are different. For example, `(1, 2) (3, 4) <>` gives `(1, 2, 3, 4)` and `2 1 ``List 4 3 ``List <>` gives `4 3 2 1 ````List`.
 * `&` - This runs the function on the top of the stack in a safe environment, on a *copy* of the current stack. If the function throws, `&` returns an empty `None` object. Otherwise is removes the items that were touched, and pack them in a `Some` object. For example, `3 2 1 'swap &` will leave the stack as ``3 2 1 (2, 1) `Some`` because `swap` only touched `1` and `2`, but left `3` alone. The numbers in `(2, 1)` were effectively swapped as the first item represents the top of the stack. On the other hand, `3 2 1 'Pair? &` will leave the stack as `3 2 1 None` since `Pair?` throws on `1`.
 
 These next operators are typically used for pattern matching:
