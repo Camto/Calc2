@@ -470,12 +470,13 @@ my %built-ins = {
 		die if @stack.elems < 1;
 		my $x = @stack[*-1];
 		die if $x.type != Func-Val;
-		my @safe-res = [];
+		my $safe-res = Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'None', vals => [];
 		try {
 			my $dumb-tmp = $x.val()(init(@stack), [0]);
-			@safe-res = $dumb-tmp[0].tail($dumb-tmp[1][0]);
+			my $some-val = Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => $dumb-tmp[0].tail($dumb-tmp[1][0]).reverse;
+			$safe-res = Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Some', vals => [$some-val];
 		}
-		append(init(@stack), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @safe-res), depth-update(@depth-affected, 1, 1)
+		append(init(@stack), $safe-res), depth-update(@depth-affected, 1, 1)
 	},
 	
 	'eq?' => sub (@stack, @depth-affected) {
@@ -552,7 +553,8 @@ my %built-ins = {
 		my $prog = @stack[*-1];
 		die if $prog.type != String-Val;
 		my @eval-res = run(Calc2.parse($prog.val, actions => Calc2er).made, [])([], [0])[0];
-		append(init(@stack), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @eval-res), depth-update(@depth-affected, 1, 1)
+		die if not @eval-res[0];
+		append(init(@stack), Val.new: type => Obj-Val, val => Obj-Data.new: tag => 'Tup', vals => @eval-res.reverse), depth-update(@depth-affected, 1, 1)
 	},
 	
 	# Generic object functions.

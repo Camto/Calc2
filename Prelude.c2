@@ -88,3 +88,4 @@ df := {
 	main} ;
 
 run := {read eval} ;
+safe_eval := {'eval & nip} ;
