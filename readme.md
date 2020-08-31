@@ -36,7 +36,7 @@ Wrapping a pattern match in `{}` instead of `[]` will not call it, but will push
 
 Many functions in the prelude depend on certain functions and operators you *won't* find in the prelude, those are the built-ins, and are hardwired into the Calc2 source. Here they will *all* be described, starting with the operators:
 
-* `+`/`-`/`*`/`/` - These are the normal math operators, except that now their right argument is the top element of the stack and their left argument the element under that one. (`3 1 -` gives `2`)
+* `+`/`-`/`*`/`/` - These are the normal math operators, except that now their right argument is the top element of the stack and their left argument the element under that one. (`3 1 -` gives `2`, the left argument being `3` and the right argument being `1`)
 * `~` - This is just unary negation.
 * `^` - Same as the normal math operators, but now it's exponentiation.
 * `%` - Same again, but now it's modulus.
@@ -52,4 +52,49 @@ These next operators are typically used for pattern matching:
 * `=?` - Pop the top two elements, if they are equal, do nothing, otherwise throw.
 * `/=?` - Pop the top two elements, if they are *not* equal, leave the left argument on the stack, otherwise throw.
 * `<?`/`>?`/`<=?`/`>=?` - Compare the top two numbers, if the comparison would be true, leave the left argument on the stack, otherwise throw.
-* `<<?`/`>>?` - Pop the top element. Throw if it's not an object or is an empty object. Otherwise, separate the last/first element from the rest of the object, leaving the individual element above the rest of the object. Essentially the inverse of `<<`/`>>`. For example, `(1, 2, 3) >>?` gives `(2, 3) 1` and `` 1 `Singleton >>?`` gives `Singleton 1`.
+* `<<?`/`>>?` - Pop the top element. Throw if it's not an object or is an empty object. Otherwise, separate the last/first element from the rest of the object, leaving the individual element above the rest of the object. Essentially the inverse of `<<`/`>>`. For example, `(1, 2, 3) >>?` gives `(2, 3) 1` and ``1 `Singleton >>?`` gives `Singleton 1`.
+
+Now for the normally named builtins:
+
+`eval` - Runs the string on the top of the stack as a Calc2 program with a fresh stack and variables. `eval` does not catch anything if the program errors and the program has no access to the prelude. The prelude has some `eval` variants you can check out.
+
+Here are built-ins for manipulating objects:
+
+* `any?` - Destructure an object regardless of tag.
+* `tag` - Return the tag of the top of the stack, which must be an object.
+* `len` - Return the number of values in element on top of the stack, which must be an object.
+* `make_obj` - Pops a tag and a length, and makes an object with that tag and that many values. For example `2 1 2 "Pair" make_obj` gives `2 1 ``Pair` and `"c" "b" "a" 3 "Tup" make_obj` gives `("a", "b", "c")`
+
+Here are built-in math functions, which only take numbers:
+
+* `re` - Gives the real component of the top of the stack.
+* `im` - Same but for the imaginary component.
+* `round` - Rounds the top item of the stack.
+* `ceil` - Same but rounds up.
+* `floor` - Same but rounds down.
+* `rand` - Gives a random number between 0 and the top of the stack.
+* `cos` - Gives the cosine of the top of the stack.
+* `sin` - Same but for sine.
+* `tan` - Same but for tangent.
+* `sec` - Same but for secant.
+* `csc` - Same but for cosecant.
+* `cot` - Same but for cotangent.
+* `log` - Returns the log base right argument of the left argument.
+* `ln` - Returns the natural logarithm of the top of the stack.
+
+Here are built-ins for objects and strings:
+
+* `nth` - Return the value at index right argument of the object left argument, 0 indexed. For example, `("a", "b", "c") 1 nth` gives `"b"`, then value at index `1`.
+* `slice` - The left and right argument form a range, that's used to slice the object under them on the stack. For example, `("a", "b", "c", "d", "e", "f") 2 5 slice` gives `("c", "d", "e")`, from index `2`, to the right under index `5`.
+* `join` - Joins the strings in the left argument into one string using the right argument as the joiner.
+* `split` - Splits the left argument into a list a strings using the right argument as the splitter.
+* `num_to_str` - Turn the top item of the stack, which must be a number, into a string.
+* `str_to_num` - Parse the top item of the stack, which must be a string, as a Calc2 number literal, and convert it to the correct number type.
+
+Here are the built-ins for I/O:
+
+* `input` - Get a line input as a string.
+* `print` - Pop and print the top of the stack (doesn't have to be a string).
+* `print_no_nl` - Same but doesn't terminate with a newline.
+* `read` - Read a file with the given name.
+* `write` - Write the left argument to the file named the right argument.
