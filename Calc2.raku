@@ -684,6 +684,16 @@ my %built-ins = {
 	
 	# List and string functions.
 	
+	nth => sub (@stack, @depth-affected) {
+		die if @stack.elems < 2;
+		my $idx = @stack[*-1];
+		my $ls = @stack[*-2];
+		die if $idx.type != Integer-Val;
+		die if $ls.type != Obj-Val;
+		die if $idx.val < 0 || $idx.val >= $ls.val.vals.elems;
+		append(@stack.head(*-2), $ls.val.vals[$idx.val]), depth-update(@depth-affected, 2, 1)
+	},
+	
 	slice => sub (@stack, @depth-affected) {
 		die if @stack.elems < 3;
 		my $t = @stack[*-1];
