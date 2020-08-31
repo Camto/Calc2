@@ -87,5 +87,9 @@ df := {
 	i := {(1+,)} ; d := {(1-,)} ; s := {(2^,)} ; o := {dup (,<<)} ;
 	main} ;
 
-run := {read eval} ;
-safe_eval := {'eval & nip} ;
+prelude := "Prelude.c2" read ;
+presplit_prelude := 'prelude "" split ;
+eval_prelude := {'presplit_prelude swap "" split <> "" join eval} ;
+run := {read eval_prelude} ;
+safe_eval := {{eval ()?} & nip} ;
+safe_eval_prelude := {{eval_prelude ()?} & nip} ;
