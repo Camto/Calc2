@@ -31,7 +31,7 @@ This same pipes and arrows syntax for pattern matching can be used in other plac
 
 ## Functions
 
-Wrapping a pattern match in `{}` instead of `[]` will not call it, but will push a function to the stack that can then be called. To actually call it, you can use the predefined variable `do`, which is itself defined as `do := {fn-> fn} ;` (pop something, name it `fn`, then call it). Remember that using a variables name without a leading quote will call it rather than push it. Taking the duplication example from earlier, we can now use `2 {a-> 'a 'a} do`, which would be better as its own function. There actually one like that in the prelude, near `do`! It called `dup`, and it's defined as `dup := {a-> 'a 'a} ;`. After reading all this, be sure to check out the prelude (`Prelude.c2`), which has plenty of useful functions and example of Calc2 code. All this talk of functions leads us to...
+Wrapping a pattern match in `{}` instead of `[]` will not call it, but will push a function to the stack that can then be called. To actually call it, you can use the predefined variable `do`, which is itself defined as `do := {fn-> fn} ;` (pop something, name it `fn`, then call it). Remember that using a variables name without a leading quote will call it rather than push it. Taking the duplication example from earlier, we can now use `2 {a-> 'a 'a} do`, which would be better as its own function. There actually one like that in the prelude, near `do`! It's called `dup`, and it's defined as `dup := {a-> 'a 'a} ;`. After reading all this, be sure to check out the prelude (`Prelude.c2`), which has plenty of useful functions and example of Calc2 code. All this talk of functions leads us to...
 
 ## The built-in functions
 
