@@ -5,7 +5,7 @@ Briefly, Calc2 is a stack based language with pattern matching. Everything is an
 * Integer literals. Example: `10`
 
 * Decimal literals, with a decimal point (`.`) and digits both before *and* after it. Example: `3.14`
-* Complex literals, which are an optional real part and plus/minus sign, with a required imaginary part, with the `i`. Example: `2`, `3.1+2i`
+* Complex literals, which are an optional real part and plus/minus sign, with a required imaginary part, with the `i`. Example: `2i`, `3.1+2i`
 
 There are also string literals, which can always be multline and escape with ` \ `, and also simply push themselves onto the stack. Before going on to the next instruction, we have to talk about...
 
