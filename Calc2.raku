@@ -609,7 +609,7 @@ my %built-ins = {
 	round => sub (@stack, @depth-affected) {
 		die if @stack.elems < 1;
 		my $x = @stack[*-1];
-		die if not is-num-type($x.type);
+		die if not is-real-type($x.type);
 		append(init(@stack), Val.new(type => Integer-Val, val => $x.val.round)), depth-update(@depth-affected, 1, 1)
 	},
 	
