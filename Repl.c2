@@ -8,5 +8,6 @@ repl := {funcs ->
 		'funcs swap <> "" join 'eval & nip [Some?-> ()? reverse | None?-> ("Error")] print_stack
 		'funcs repl} ;
 
-"Welcome to the Calc2 repl!" print
+"Welcome to the Calc2 repl!
+To run a file, you can use `\"file.c2\" run`" print
 'prelude repl
